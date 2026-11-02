@@ -1,4 +1,4 @@
-import { services } from './content.ts'
+import { serviceAnchor, services } from './content.ts'
 import { Page } from './Page.tsx'
 import { SiteLink } from '../../shared/SiteLink.tsx'
 
@@ -15,7 +15,7 @@ export function ServicesPage() {
       </header>
       <div className="service-list">
         {services.map((service) => (
-          <article key={service.title} className="service-entry">
+          <article id={serviceAnchor(service.title)} key={service.title} className="service-entry">
             <h2>{service.title}</h2>
             <p className="service-summary">{service.summary}</p>
             <p>{service.detail}</p>

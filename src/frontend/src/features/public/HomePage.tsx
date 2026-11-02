@@ -1,4 +1,4 @@
-import { articles, bank, services } from './content.ts'
+import { articles, bank, serviceAnchor, services } from './content.ts'
 import { Page } from './Page.tsx'
 import { SiteLink } from '../../shared/SiteLink.tsx'
 
@@ -57,11 +57,13 @@ export function HomePage() {
         <ol className="index-list">
           {services.map((service, index) => (
             <li key={service.title}>
-              <span>0{index + 1}</span>
-              <div>
-                <h3>{service.title}</h3>
-                <p>{service.summary}</p>
-              </div>
+              <SiteLink href={`/services#${serviceAnchor(service.title)}`} className="index-link">
+                <span>0{index + 1}</span>
+                <div>
+                  <h3>{service.title}</h3>
+                  <p>{service.summary}</p>
+                </div>
+              </SiteLink>
             </li>
           ))}
         </ol>
@@ -108,6 +110,9 @@ export function HomePage() {
             </li>
           ))}
         </ul>
+        <SiteLink href="/insights" className="text-link">
+          All insights
+        </SiteLink>
       </section>
 
       <section className="closing">

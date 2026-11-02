@@ -1,6 +1,10 @@
 import { bank, nav } from '../features/public/content.ts'
 import { SiteLink } from './SiteLink.tsx'
 
+function telephoneHref(telephone: string) {
+  return `tel:${telephone.replace(/[^\d+]/g, '')}`
+}
+
 export function Footer() {
   return (
     <footer className="site-footer">
@@ -17,14 +21,22 @@ export function Footer() {
           {bank.geneva.lines.map((line) => (
             <p key={line}>{line}</p>
           ))}
-          <p>{bank.geneva.telephone}</p>
+          <p>
+            <a className="contact-link" href={telephoneHref(bank.geneva.telephone)}>
+              {bank.geneva.telephone}
+            </a>
+          </p>
         </div>
         <div>
           <p className="footer-label">Zurich</p>
           {bank.zurich.lines.map((line) => (
             <p key={line}>{line}</p>
           ))}
-          <p>{bank.zurich.telephone}</p>
+          <p>
+            <a className="contact-link" href={telephoneHref(bank.zurich.telephone)}>
+              {bank.zurich.telephone}
+            </a>
+          </p>
         </div>
         <nav aria-label="Footer">
           <p className="footer-label">Index</p>
@@ -34,11 +46,18 @@ export function Footer() {
               {item.label}
             </SiteLink>
           ))}
-          <SiteLink href="/client-access">Client access</SiteLink>
+          <SiteLink href="/client-access" className="client-access">
+            Client access
+          </SiteLink>
         </nav>
       </div>
       <div className="footer-base">
-        <p>Correspondence: {bank.correspondence}</p>
+        <p>
+          Correspondence:{' '}
+          <a className="contact-link" href={`mailto:${bank.correspondence}`}>
+            {bank.correspondence}
+          </a>
+        </p>
         <p>© {bank.established}–2026 {bank.name}. All rights reserved.</p>
       </div>
     </footer>

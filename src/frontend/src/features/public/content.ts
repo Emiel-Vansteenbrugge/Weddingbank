@@ -32,6 +32,13 @@ export const nav = [
   { href: '/contact', label: 'Contact' },
 ] as const
 
+export function serviceAnchor(title: string) {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '')
+}
+
 export const services = [
   {
     title: 'Private wealth management',

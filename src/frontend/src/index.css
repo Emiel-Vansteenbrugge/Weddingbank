@@ -109,6 +109,7 @@ a { color: inherit; }
 .site-nav {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 1.6rem;
 }
 
@@ -117,13 +118,14 @@ a { color: inherit; }
   font-size: 0.78rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+  white-space: nowrap;
   color: var(--ivory-muted);
 }
 
 .site-nav a[aria-current="page"],
 .site-nav a:hover { color: var(--ivory); }
 
-.client-access {
+.site-nav .client-access {
   margin-left: 0.8rem;
   padding-left: 1.4rem;
   border-left: 1px solid var(--line-light);
@@ -181,8 +183,16 @@ a { color: inherit; }
 
 .hero-actions {
   display: flex;
-  gap: 1.8rem;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 1.8rem;
+  row-gap: 0.85rem;
   margin-top: 2.4rem;
+}
+
+.hero-actions .text-link {
+  margin-top: 0;
+  white-space: nowrap;
 }
 
 .text-link {
@@ -225,11 +235,17 @@ a { color: inherit; }
   font-size: clamp(2.4rem, 4.5vw, 4.2rem);
 }
 
+.split h2 {
+  font-size: clamp(2.2rem, 3.1vw, 3.35rem);
+}
+
 .band-copy, .band-intro p:last-child {
   max-width: 38rem;
   margin-top: 1.4rem;
   color: var(--muted);
 }
+
+.band-copy p + p { margin-top: 1.15rem; }
 
 .band-dark .band-copy,
 .band-dark .band-intro p:last-child { color: var(--ivory-muted); }
@@ -241,17 +257,35 @@ a { color: inherit; }
 
 .index-list { margin: 3rem 0 0; }
 
-.index-list li, .timeline li {
+.index-list li,
+.timeline li {
+  border-top: 1px solid var(--line);
+}
+
+.timeline li {
   display: grid;
   grid-template-columns: 7rem 1fr;
   gap: 1.5rem;
   padding: 1.5rem 0;
-  border-top: 1px solid var(--line);
 }
+
+.index-link {
+  display: grid;
+  grid-template-columns: 7rem 1fr;
+  gap: 1.5rem;
+  align-items: start;
+  padding: 1.5rem 0;
+  color: inherit;
+  text-decoration: none;
+}
+
+.index-link:hover h3,
+.index-link:focus-visible h3 { color: var(--gold); }
 
 .band-dark .index-list li { border-top-color: var(--line-light); }
 
-.index-list span, .timeline span {
+.index-link > span,
+.timeline span {
   font-size: 0.78rem;
   letter-spacing: 0.14em;
   color: var(--gold);
@@ -271,11 +305,16 @@ a { color: inherit; }
 .split {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
-  min-height: 36rem;
+  align-items: center;
   background: var(--ivory);
 }
 
-.split img { min-height: 24rem; }
+.split img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  object-position: center;
+}
 
 .split div, .closing div {
   display: flex;
@@ -381,6 +420,7 @@ a { color: inherit; }
 .service-entry {
   padding: 2.5rem 0;
   border-top: 1px solid var(--line);
+  scroll-margin-top: calc(var(--header) + 1.5rem);
 }
 
 .service-summary {
@@ -518,9 +558,34 @@ a { color: inherit; }
 
 .footer-note { max-width: 24rem; margin-top: 0.8rem; }
 
-.site-footer a { display: block; text-decoration: none; margin-top: 0.25rem; }
+.site-footer nav a {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: var(--ivory-muted);
+}
 
-.site-footer a:hover { color: var(--ivory); }
+.site-footer nav a.client-access,
+.site-footer nav a.client-access:hover {
+  margin-top: 0.9rem;
+  padding-left: 0;
+  border-left: 0;
+  color: var(--gold);
+}
+
+.site-footer nav a:hover { color: var(--ivory); }
+
+.site-footer a.contact-link {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--gold);
+  padding-bottom: 0.12rem;
+}
+
+.site-footer a.contact-link:hover { color: var(--ivory); }
 
 .footer-base {
   display: flex;
@@ -532,7 +597,7 @@ a { color: inherit; }
   font-size: 0.85rem;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 980px) {
   .menu-button { display: block; }
 
   .site-nav {
@@ -543,6 +608,7 @@ a { color: inherit; }
     top: 100%;
     flex-direction: column;
     align-items: flex-start;
+    flex-shrink: 1;
     gap: 0;
     background: var(--black);
     border-bottom: 1px solid var(--line-light);
@@ -553,19 +619,22 @@ a { color: inherit; }
 
   .site-nav a { padding: 0.8rem 0; }
 
-  .client-access {
+  .site-nav .client-access {
     margin-left: 0;
     padding-left: 0;
     border-left: 0;
   }
+}
 
+@media (max-width: 900px) {
   .hero::after { background: rgba(16, 16, 16, 0.55); }
 
   .split, .prose-grid, .contact-layout, .value-list, .department-list, .footer-grid, .footer-base {
     grid-template-columns: 1fr;
   }
 
-  .index-list li, .timeline li {
+  .timeline li,
+  .index-link {
     grid-template-columns: 1fr;
     gap: 0.4rem;
   }

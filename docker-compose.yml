@@ -1,0 +1,88 @@
+services:
+  proxy:
+    build:
+      context: .
+      dockerfile: infra/docker/proxy.Dockerfile
+    container_name: weddingbank-proxy
+    restart: unless-stopped
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks:
+      - edge
+      - services
+    ports:
+      - "${PROXY_BIND_ADDRESS:-127.0.0.1}:${PROXY_PORT:-8080}:8080"
+    depends_on:
+      - api
+      - web
+
+  web:
+    build:
+      context: .
+      dockerfile: infra/docker/web.Dockerfile
+    container_name: weddingbank-web
+    restart: unless-stopped
+    logging: *logging
+    networks:
+      - services
+
+  api:
+    build:
+      context: .
+      dockerfile: infra/docker/api.Dockerfile
+    container_name: weddingbank-api
+    restart: unless-stopped
+    logging: *logging
+    networks:
+      - services
+      - data
+      - egress
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-}
+    volumes:
+      - dataprotection:/var/weddingbank/data-protection
+
+  postgres:
+    image: postgres:18
+    container_name: weddingbank-postgres
+    restart: unless-stopped
+    logging: *logging
+    networks:
+      - data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-weddingbank}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-weddingbank}
+      POSTGRES_DB: ${POSTGRES_DB:-weddingbank}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+networks:
+  # Docker only publishes a host port from a network that is not internal.
+  edge:
+    name: weddingbank-edge
+  services:
+    name: weddingbank-services
+    internal: true
+  data:
+    name: weddingbank-data
+    internal: true
+  # The API calls Resend. This network is not internal, so that call can leave the host.
+  egress:
+    name: weddingbank-egress
+
+volumes:
+  pgdata:
+    name: weddingbank-pgdata
+  dataprotection:
+    name: weddingbank-dataprotection

@@ -1,6 +1,6 @@
 # The Wedding Bank
 
-Digitale basis voor The Wedding Bank. De architectuur staat in [docs/adr/0001-architectuur.md](docs/adr/0001-architectuur.md). De CI/CD-keten staat in [docs/deployment/gitlab-cicd.md](docs/deployment/gitlab-cicd.md).
+Digitale basis voor The Wedding Bank. De architectuur staat in [docs/adr/0001-architectuur.md](docs/adr/0001-architectuur.md). De deploy staat in [docs/deployment/github.md](docs/deployment/github.md).
 
 Deze stap bevat de solution, een lege frontend, lokale PostgreSQL 18, Dockerfiles en de CI/CD-basis. Accounts, MFA, spel en beheer volgen later.
 
@@ -38,5 +38,4 @@ dotnet test src/backend/WeddingBank.slnx
 npm run typecheck --prefix src/frontend
 npm run lint --prefix src/frontend
 npm run build --prefix src/frontend
-bash infra/deploy/test-deploy-scripts.sh
 ```

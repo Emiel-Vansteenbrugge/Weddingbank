@@ -1,9 +1,0 @@
-[Unit]
-Description=Deploy The Wedding Bank test release
-After=docker.service
-Requires=docker.service
-
-[Service]
-Type=oneshot
-ExecStart=/bin/bash /usr/local/sbin/weddingbank-agent.sh test --once
-NoNewPrivileges=true

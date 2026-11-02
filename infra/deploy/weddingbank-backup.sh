@@ -19,22 +19,21 @@ case "$KIND" in
     ;;
 esac
 
-ENV_FILE=/opt/weddingbank/prod/.env
-STATE_DIR=/var/lib/weddingbank/prod
-[[ -f "$ENV_FILE" ]] || {
-  echo "Missing ${ENV_FILE}" >&2
+if [[ -n "${WEDDINGBANK_ENV_FILE:-}" ]]; then
+  ENV_FILE="$WEDDINGBANK_ENV_FILE"
+elif [[ -f /home/administrator/config/weddingbank/.env ]]; then
+  ENV_FILE=/home/administrator/config/weddingbank/.env
+elif [[ -f /opt/weddingbank/prod/.env ]]; then
+  ENV_FILE=/opt/weddingbank/prod/.env
+else
+  echo "Missing production .env. Expected /home/administrator/config/weddingbank/.env" >&2
   exit 1
-}
+fi
 
 set -a
 # shellcheck disable=SC1090
 source "$ENV_FILE"
 set +a
-
-[[ "${COMPOSE_PROJECT_NAME:-}" == "weddingbank-prod" ]] || {
-  echo "Backup refused because the compose project is not weddingbank-prod." >&2
-  exit 1
-}
 [[ -n "${POSTGRES_USER:-}" && -n "${POSTGRES_DB:-}" && -n "${POSTGRES_PASSWORD:-}" ]] || {
   echo "Production database settings are incomplete." >&2
   exit 1
@@ -46,18 +45,13 @@ case "$POSTGRES_PASSWORD" in
     ;;
 esac
 
-container="${COMPOSE_PROJECT_NAME}-postgres"
+container="${WEDDINGBANK_POSTGRES_CONTAINER:-weddingbank-postgres}"
 docker inspect "$container" >/dev/null
 
 destination_dir="/var/backups/weddingbank/prod/${KIND}"
 install -d -m 700 "$destination_dir"
 stamp="$(date -u +%Y%m%dT%H%M%SZ)"
-sha="unknown"
-if [[ -f "${STATE_DIR}/state.env" ]]; then
-  sha="$(awk -F= '$1 == "CURRENT_SHA" { print $2 }' "${STATE_DIR}/state.env")"
-  [[ -n "$sha" ]] || sha="unknown"
-fi
-dump="${destination_dir}/weddingbank-${stamp}-${sha}.dump"
+dump="${destination_dir}/weddingbank-${stamp}.dump"
 
 docker exec "$container" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc >"$dump"
 [[ -s "$dump" ]] || {
@@ -67,8 +61,5 @@ docker exec "$container" pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc >"$du
 }
 docker exec -i "$container" pg_restore --list <"$dump" >/dev/null
 
-if [[ -f "${STATE_DIR}/release.env" ]]; then
-  cp "${STATE_DIR}/release.env" "${dump}.release.env"
-fi
 chmod 600 "$dump"
 echo "Wrote ${dump}"

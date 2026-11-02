@@ -17,7 +17,7 @@ De API past het schema niet aan bij het opstarten. Migraties draaien in een eenm
 
 ## Omgevingen
 
-Test volgt `develop` en wordt automatisch gedeployed nadat de GitLab-job `deploy:test` slaagt. Productie volgt `main` en start pas nadat iemand `deploy:production` handmatig uitvoert. Elke omgeving heeft een eigen Compose-project, netwerkpaar, volume, database, databasegebruiker en env-bestand.
+Productie volgt `main` op GitHub en wordt gedeployed door de self-hosted runner op de VM. Die bouwt de images lokaal en start Compose. Het env-bestand met de secrets blijft op de server.
 
 PostgreSQL publiceert in test en productie geen hostpoort. Lokaal publiceert `docker-compose.dev.yml` PostgreSQL alleen op `127.0.0.1:5432`. Dat bestand wordt niet gebruikt op de server.
 
@@ -27,13 +27,11 @@ Per omgeving zijn er drie Docker-netwerken:
 - `services` is intern en bevat de API, de frontend en de proxy.
 - `edge` is niet intern en bevat alleen de proxy, omdat Docker een hostpoort alleen vanaf zo'n netwerk publiceert.
 
-De proxy en de frontend kunnen PostgreSQL niet bereiken. De API en PostgreSQL hebben geen uitgaande internetroute. De proxy heeft die route technisch wel, omdat zijn publicatie-netwerk niet intern is. De host haalt images en deploymentinformatie zelf op via TCP 443.
+De proxy en de frontend kunnen PostgreSQL niet bereiken. PostgreSQL heeft geen uitgaande internetroute. De API wel, via een apart netwerk, omdat het contactformulier Resend aanroept. De proxy heeft uitgaand verkeer technisch ook, omdat zijn publicatie-netwerk niet intern is. De host bouwt de images zelf.
 
 ## Deployment
 
-GitLab.com-runners bouwen, testen en publiceren images naar de projectregistry. Een pull-agent op de VM leest met een Reporter-token (`read_api`) alleen de Deployments API. Een project-deploytoken met uitsluitend `read_registry` en `read_package_registry` downloadt het manifest en doet `docker pull`. Geen van beide tokens kan code, packages of images publiceren. Productiesecrets blijven op de server.
-
-Images worden gedeployed op digest. De agent voert geen checkout uit en gebruikt het Compose-bestand dat op de server staat. De operationele stappen staan in [docs/deployment/gitlab-cicd.md](../deployment/gitlab-cicd.md).
+GitHub Actions test op een gehoste runner. De deploy-job draait op de self-hosted runner van de VM, bouwt de images daar en start Compose. Productiesecrets blijven in het env-bestand op de server. De operationele stappen staan in [docs/deployment/github.md](../deployment/github.md).
 
 ## Database, back-up en herstel
 
@@ -86,6 +84,6 @@ Dat is beveiliging op applicatieniveau. Het is geen onveranderbare opslag. De mi
 
 ## CI/CD
 
-De operationele keten staat in [docs/deployment/gitlab-cicd.md](../deployment/gitlab-cicd.md). Runners publiceren na een geslaagde push images op digest. De server haalt die images op met een vast script. Productie deployt niet door een push naar `main`.
+De operationele keten staat in [docs/deployment/github.md](../deployment/github.md). Een push naar `main` deployt productie.
 
-Accounts, MFA, spel, beheer en databasemigraties volgen later. De deployketen voert een migratie alleen uit wanneer die service later bestaat en `WEDDINGBANK_RUN_MIGRATIONS=true` is.
+Accounts, MFA, spel, beheer en databasemigraties volgen later.

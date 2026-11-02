@@ -1,0 +1,11 @@
+# Production overrides. Required on the server:
+#   docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+services:
+  proxy:
+    restart: unless-stopped
+  web:
+    restart: unless-stopped
+  api:
+    restart: unless-stopped
+  postgres:
+    restart: unless-stopped

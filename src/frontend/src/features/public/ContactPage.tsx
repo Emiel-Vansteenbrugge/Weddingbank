@@ -2,12 +2,37 @@ import { useState, type FormEvent } from 'react'
 import { bank } from './content.ts'
 import { Page } from './Page.tsx'
 
-export function ContactPage() {
-  const [submitted, setSubmitted] = useState(false)
+type EnquiryStatus = 'idle' | 'sending' | 'sent' | 'error'
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+export function ContactPage() {
+  const [status, setStatus] = useState<EnquiryStatus>('idle')
+
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
-    setSubmitted(true)
+    if (status === 'sending') {
+      return
+    }
+
+    const data = new FormData(event.currentTarget)
+    const telephone = String(data.get('telephone') ?? '').trim()
+    setStatus('sending')
+
+    try {
+      const response = await fetch('/api/enquiries', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+        body: JSON.stringify({
+          name: data.get('name'),
+          email: data.get('email'),
+          telephone: telephone.length > 0 ? telephone : null,
+          subject: data.get('subject'),
+          message: data.get('message'),
+        }),
+      })
+      setStatus(response.ok ? 'sent' : 'error')
+    } catch {
+      setStatus('error')
+    }
   }
 
   return (
@@ -50,10 +75,9 @@ export function ContactPage() {
         </div>
         <form className="enquiry" onSubmit={onSubmit}>
           <h2>Enquiry</h2>
-          {submitted ? (
+          {status === 'sent' ? (
             <p className="form-status" role="status">
-              Thank you. Please address your enquiry by letter or to {bank.correspondence}. The client office
-              corresponds directly.
+              Thank you. Your enquiry has been received.
             </p>
           ) : (
             <>
@@ -77,7 +101,14 @@ export function ContactPage() {
                 Message
                 <textarea name="message" rows={6} required />
               </label>
-              <button type="submit">Submit enquiry</button>
+              {status === 'error' ? (
+                <p className="form-status" role="alert">
+                  Your enquiry could not be sent. Please try again shortly.
+                </p>
+              ) : null}
+              <button type="submit" disabled={status === 'sending'}>
+                {status === 'sending' ? 'Please wait' : 'Submit enquiry'}
+              </button>
               <p className="form-note">
                 Please do not include account numbers or confidential documents in this form.
               </p>

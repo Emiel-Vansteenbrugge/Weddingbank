@@ -21,6 +21,8 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\WeddingBank.Api\WeddingBank.Api.csproj" />
+    <ProjectReference Include="..\..\WeddingBank.Application\WeddingBank.Application.csproj" />
+    <ProjectReference Include="..\..\WeddingBank.Infrastructure\WeddingBank.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

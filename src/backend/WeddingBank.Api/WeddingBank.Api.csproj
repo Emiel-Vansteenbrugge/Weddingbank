@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
     <ProjectReference Include="..\WeddingBank.Application\WeddingBank.Application.csproj" />
@@ -9,6 +9,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>1212535a-4914-4cfc-a17e-2a5ea6614289</UserSecretsId>
   </PropertyGroup>
 
 </Project>

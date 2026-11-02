@@ -41,6 +41,9 @@ services:
     networks:
       - services
       - data
+    environment:
+      Resend__ApiKey: ${RESEND_API_KEY:-}
+      Resend__FromEmail: '${RESEND_FROM_EMAIL:-"Ambre & Jules" <noreply.ambre@evsb.io>}'
     volumes:
       - dataprotection:/var/weddingbank/data-protection
 

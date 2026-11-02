@@ -1,0 +1,83 @@
+# Server stack for one environment. Installed under /opt/weddingbank/test
+# or /opt/weddingbank/prod. Local development uses docker-compose.dev.yml.
+name: ${COMPOSE_PROJECT_NAME}
+
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
+
+services:
+  proxy:
+    image: ${WEDDINGBANK_PROXY_IMAGE}
+    pull_policy: if_not_present
+    restart: unless-stopped
+    logging: *logging
+    networks:
+      - edge
+      - services
+    ports:
+      - "${PROXY_BIND_ADDRESS}:${PROXY_PORT}:8080"
+    depends_on:
+      api:
+        condition: service_started
+      web:
+        condition: service_started
+
+  web:
+    image: ${WEDDINGBANK_WEB_IMAGE}
+    pull_policy: if_not_present
+    restart: unless-stopped
+    logging: *logging
+    networks:
+      - services
+
+  api:
+    image: ${WEDDINGBANK_API_IMAGE}
+    pull_policy: if_not_present
+    restart: unless-stopped
+    logging: *logging
+    networks:
+      - services
+      - data
+    volumes:
+      - dataprotection:/var/weddingbank/data-protection
+
+  postgres:
+    image: postgres:18
+    container_name: ${COMPOSE_PROJECT_NAME}-postgres
+    restart: unless-stopped
+    logging: *logging
+    networks:
+      - data
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+networks:
+  # Docker only publishes a host port from a network that is not internal.
+  # The proxy is the only container on this network.
+  edge:
+    name: ${COMPOSE_PROJECT_NAME}-edge
+  services:
+    name: ${COMPOSE_PROJECT_NAME}-services
+    internal: true
+  data:
+    name: ${COMPOSE_PROJECT_NAME}-data
+    internal: true
+
+volumes:
+  pgdata:
+    name: ${COMPOSE_PROJECT_NAME}-pgdata
+  dataprotection:
+    name: ${COMPOSE_PROJECT_NAME}-dataprotection

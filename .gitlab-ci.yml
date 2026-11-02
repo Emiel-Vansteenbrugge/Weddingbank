@@ -1,0 +1,172 @@
+# Active pipeline for https://gitlab.com/evsb-group/weddingbank
+# Branch pipelines on develop and main publish images.
+# Merge request pipelines test other branches and do not publish.
+
+workflow:
+  auto_cancel:
+    on_new_commit: interruptible
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "main"
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME != "develop" && $CI_MERGE_REQUEST_SOURCE_BRANCH_NAME != "main"
+    - if: $CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS
+      when: never
+
+stages:
+  - validate
+  - test
+  - build
+  - publish
+  - deploy
+
+variables:
+  NUGET_PACKAGES: $CI_PROJECT_DIR/.nuget/packages
+  npm_config_cache: $CI_PROJECT_DIR/.npm
+
+.dotnet:
+  image: mcr.microsoft.com/dotnet/sdk:10.0
+  interruptible: true
+  cache:
+    key: nuget
+    paths:
+      - .nuget/packages
+  before_script:
+    - dotnet restore src/backend/WeddingBank.slnx
+
+.node:
+  image: node:24
+  interruptible: true
+  cache:
+    key: npm
+    paths:
+      - .npm
+  before_script:
+    - npm ci --prefix src/frontend
+
+.docker:
+  image: docker:27
+  services:
+    - name: docker:27-dind
+      alias: docker
+      variables:
+        HEALTHCHECK_TCP_PORT: "2376"
+  interruptible: true
+  variables:
+    DOCKER_HOST: tcp://docker:2376
+    DOCKER_TLS_CERTDIR: "/certs"
+    DOCKER_TLS_VERIFY: "1"
+    DOCKER_CERT_PATH: "$DOCKER_TLS_CERTDIR/client"
+  before_script:
+    - test -s "$DOCKER_CERT_PATH/ca.pem"
+    - test -s "$DOCKER_CERT_PATH/cert.pem"
+    - test -s "$DOCKER_CERT_PATH/key.pem"
+    - docker info
+
+.build-images:
+  script:
+    - docker build -f infra/docker/api.Dockerfile -t "$CI_REGISTRY_IMAGE/api:$CI_COMMIT_SHA" .
+    - docker build -f infra/docker/web.Dockerfile -t "$CI_REGISTRY_IMAGE/web:$CI_COMMIT_SHA" .
+    - docker build -f infra/docker/proxy.Dockerfile -t "$CI_REGISTRY_IMAGE/proxy:$CI_COMMIT_SHA" .
+    - docker run --rm "$CI_REGISTRY_IMAGE/proxy:$CI_COMMIT_SHA" nginx -t
+
+backend:build:
+  extends: .dotnet
+  stage: validate
+  script:
+    - dotnet build src/backend/WeddingBank.slnx --no-restore -c Release
+
+frontend:validate:
+  extends: .node
+  stage: validate
+  script:
+    - npm run typecheck --prefix src/frontend
+    - npm run lint --prefix src/frontend
+
+compose:validate:
+  stage: validate
+  image: docker:27
+  interruptible: true
+  script:
+    - docker compose -f infra/compose/docker-compose.yml --env-file infra/compose/env/ci.env config
+
+scripts:validate:
+  stage: validate
+  image: debian:bookworm-slim
+  interruptible: true
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y -qq bash jq curl unzip ca-certificates
+  script:
+    - bash infra/deploy/test-deploy-scripts.sh
+
+backend:test:
+  extends: .dotnet
+  stage: test
+  script:
+    - dotnet test src/backend/WeddingBank.slnx --no-restore -c Release
+
+frontend:build:
+  extends: .node
+  stage: build
+  script:
+    - npm run build --prefix src/frontend
+
+docker:build:
+  extends: .docker
+  stage: build
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "merge_request_event"
+  script:
+    - !reference [.build-images, script]
+
+docker:publish:
+  extends: .docker
+  stage: publish
+  interruptible: false
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+    - if: $CI_COMMIT_BRANCH == "main"
+  script:
+    - echo "$CI_REGISTRY_PASSWORD" | docker login --username "$CI_REGISTRY_USER" --password-stdin "$CI_REGISTRY"
+    - !reference [.build-images, script]
+    - bash infra/deploy/record-image-digests.sh
+  artifacts:
+    reports:
+      dotenv: image-digests.env
+    expire_in: 90 days
+
+.deploy:
+  stage: deploy
+  image: debian:bookworm-slim
+  interruptible: false
+  before_script:
+    - apt-get update -qq
+    - apt-get install -y -qq bash curl ca-certificates jq
+  script:
+    - bash infra/deploy/publish-manifest.sh "$DEPLOY_ENVIRONMENT"
+
+deploy:test:
+  extends: .deploy
+  variables:
+    DEPLOY_ENVIRONMENT: test
+  resource_group: weddingbank-test
+  environment:
+    name: test
+    deployment_tier: testing
+    url: https://test.wedding-bank.evsb.io
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+
+deploy:production:
+  extends: .deploy
+  variables:
+    DEPLOY_ENVIRONMENT: production
+  resource_group: weddingbank-production
+  environment:
+    name: production
+    deployment_tier: production
+    url: https://wedding-bank.evsb.io
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+      when: manual
+      allow_failure: false

@@ -1,0 +1,11 @@
+[Unit]
+Description=Check for a new Wedding Bank test release
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=1min
+AccuracySec=15s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

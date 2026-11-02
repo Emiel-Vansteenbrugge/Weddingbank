@@ -1,0 +1,9 @@
+[Unit]
+Description=Deploy the approved Wedding Bank production release
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /usr/local/sbin/weddingbank-agent.sh production --once
+NoNewPrivileges=true

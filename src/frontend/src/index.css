@@ -10,7 +10,7 @@
   --serif: "Cormorant Garamond", Georgia, "Times New Roman", serif;
   --sans: Inter, "Helvetica Neue", Arial, sans-serif;
   --measure: 72rem;
-  --header: 5.25rem;
+  --header: 8.4rem;
   color: var(--ink);
   background: var(--ivory);
   font-family: var(--sans);
@@ -66,33 +66,26 @@ a { color: inherit; }
   justify-content: space-between;
   gap: 2rem;
   min-height: var(--header);
-  padding: 0 4vw;
+  padding: 0.7rem 4vw;
   border-bottom: 1px solid var(--line-light);
 }
 
-.wordmark {
-  display: flex;
-  flex-direction: column;
+.wordmark,
+.footer-mark {
+  display: block;
+  flex: 0 0 auto;
+  line-height: 0;
   text-decoration: none;
-  line-height: 1;
 }
 
-.wordmark span:first-child,
-.wordmark-cie {
-  font-family: var(--serif);
-  font-size: 1.7rem;
-  letter-spacing: 0.04em;
+.wordmark img,
+.footer-mark img {
+  width: 7rem;
+  height: auto;
+  object-fit: contain;
 }
 
-.wordmark-cie { color: var(--gold); }
-
-.wordmark-meta {
-  margin-top: 0.35rem;
-  font-size: 0.68rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--ivory-muted);
-}
+.footer-mark img { width: 11rem; }
 
 .menu-button {
   display: none;
@@ -540,12 +533,6 @@ a { color: inherit; }
   display: grid;
   grid-template-columns: 1.4fr 1fr 1fr 0.8fr;
   gap: 2rem;
-}
-
-.footer-name {
-  font-family: var(--serif);
-  color: var(--ivory);
-  font-size: 2rem;
 }
 
 .footer-label {

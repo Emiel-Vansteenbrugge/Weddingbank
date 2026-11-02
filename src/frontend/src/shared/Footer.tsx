@@ -10,7 +10,9 @@ export function Footer() {
     <footer className="site-footer">
       <div className="footer-grid">
         <div>
-          <p className="footer-name">{bank.name}</p>
+          <SiteLink href="/" className="footer-mark">
+            <img src="/brand/ambre-jules.png" alt={bank.name} />
+          </SiteLink>
           <p className="footer-note">
             Private bankers since {bank.established}. Independently owned. Client assets are held with third-party
             custodians.

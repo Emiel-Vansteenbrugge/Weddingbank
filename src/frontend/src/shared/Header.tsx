@@ -17,9 +17,7 @@ export function Header({ path }: HeaderProps) {
       </a>
       <div className="header-bar">
         <SiteLink href="/" className="wordmark" onNavigate={close}>
-          <span>Ambre</span>
-          <span className="wordmark-cie">&amp; Jules</span>
-          <span className="wordmark-meta">{bank.descriptor}</span>
+          <img src="/brand/ambre-jules.png" alt={`${bank.name}, ${bank.descriptor}`} />
         </SiteLink>
         <button
           className="menu-button"

@@ -16,6 +16,7 @@ public static class IdentityServiceCollectionExtensions
         services.AddOptions<AuthOptions>().Bind(configuration.GetSection(AuthOptions.SectionName));
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<IPasswordHasher, IdentityPasswordHasher>();
+        services.AddSingleton<IHousePasswordHint, ConfiguredHousePasswords>();
         services.AddScoped<IIdentityStore, EfIdentityStore>();
         services.AddScoped<AuthenticationService>();
         services.AddScoped<HouseAccountService>();

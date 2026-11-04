@@ -809,6 +809,14 @@ a { color: inherit; }
 
 .record dd { margin: 0.2rem 0 0; }
 
+.empty-list .password-readout {
+  margin: 0.8rem 0 1.2rem;
+  color: var(--ink);
+  font-family: var(--serif);
+  font-size: 1.35rem;
+  letter-spacing: 0.03em;
+}
+
 .paper {
   max-width: 40rem;
   margin-top: 1.6rem;

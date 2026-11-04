@@ -6,11 +6,12 @@ const houseLogins = ['juul', 'amber', 'administrator'] as const
 type HouseAccount = {
   login: string
   displayName: string
+  password: string | null
 }
 
 export function HousePasswords() {
   const [accounts, setAccounts] = useState<HouseAccount[]>(
-    houseLogins.map((login) => ({ login, displayName: labelFor(login) })),
+    houseLogins.map((login) => ({ login, displayName: labelFor(login), password: null })),
   )
   const [message, setMessage] = useState<string | null>(null)
 
@@ -21,7 +22,11 @@ export function HousePasswords() {
         if (!response.ok || !active) return
         const body = (await response.json()) as HouseAccount[]
         if (!active) return
-        setAccounts(houseLogins.map((login) => body.find((account) => account.login === login) ?? { login, displayName: labelFor(login) }))
+        setAccounts(
+          houseLogins.map(
+            (login) => body.find((account) => account.login === login) ?? { login, displayName: labelFor(login), password: null },
+          ),
+        )
       })
       .catch(() => {
         if (active) setMessage('The house accounts could not be read.')
@@ -36,7 +41,7 @@ export function HousePasswords() {
       <p className="eyebrow">Settings</p>
       <h1>House sign-ins</h1>
       <p className="section-note">
-        Set the password for Juul, Amber, or the administrator. The new password replaces the old one, and that account is signed out.
+        The current password is shown in full. Setting a new one replaces it, and that account is signed out.
       </p>
       {message ? (
         <p className="form-status" role="alert">
@@ -45,14 +50,22 @@ export function HousePasswords() {
       ) : null}
       <div className="empty-list">
         {accounts.map((account) => (
-          <PasswordForm key={account.login} account={account} />
+          <PasswordForm
+            key={account.login}
+            account={account}
+            onSaved={(password) =>
+              setAccounts((current) =>
+                current.map((item) => (item.login === account.login ? { ...item, password } : item)),
+              )
+            }
+          />
         ))}
       </div>
     </>
   )
 }
 
-function PasswordForm({ account }: { account: HouseAccount }) {
+function PasswordForm({ account, onSaved }: { account: HouseAccount; onSaved: (password: string) => void }) {
   const [password, setPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
   const [pending, setPending] = useState(false)
@@ -89,6 +102,7 @@ function PasswordForm({ account }: { account: HouseAccount }) {
       setPassword('')
       setConfirmation('')
       setSaved(true)
+      onSaved(password)
     } catch {
       setError('The password could not be changed.')
     } finally {
@@ -100,6 +114,9 @@ function PasswordForm({ account }: { account: HouseAccount }) {
     <section>
       <h2>{account.displayName}</h2>
       <p className="section-note">{account.login}</p>
+      <p className="password-readout">
+        {account.password ?? 'This password is not readable yet. Set it again and the new one stays visible.'}
+      </p>
       <form className="enquiry" onSubmit={onSubmit}>
         <label>
           New password

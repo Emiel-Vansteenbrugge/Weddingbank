@@ -59,7 +59,8 @@ public sealed class DevelopmentUserSeeder(
                 passwords.Hash(entry.Password),
                 SecurityStamp.Create(),
                 clock.GetUtcNow(),
-                assigned);
+                assigned,
+                entry.Password);
             db.Users.Add(user);
             Console.WriteLine($"Created {string.Join(", ", entry.Roles)} account {login}.");
         }

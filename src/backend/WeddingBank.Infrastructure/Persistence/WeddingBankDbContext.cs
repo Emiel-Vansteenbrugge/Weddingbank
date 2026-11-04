@@ -46,6 +46,7 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
             entity.Property(user => user.Login).HasMaxLength(LoginMax).IsRequired();
             entity.Property(user => user.DisplayName).HasMaxLength(120).IsRequired();
             entity.Property(user => user.PasswordHash).HasMaxLength(500).IsRequired();
+            entity.Property(user => user.Password).HasMaxLength(200);
             entity.Property(user => user.SecurityStamp).HasMaxLength(128).IsRequired();
             entity.Property(user => user.TotpSecretProtected).HasMaxLength(1024);
             entity.HasIndex(user => user.Login).IsUnique();

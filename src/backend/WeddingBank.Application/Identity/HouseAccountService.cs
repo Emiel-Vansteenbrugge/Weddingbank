@@ -3,22 +3,49 @@ using WeddingBank.Domain.Identity;
 
 namespace WeddingBank.Application.Identity;
 
-public sealed record HouseAccount(string Login, string DisplayName, IReadOnlyList<string> Roles);
+public sealed record HouseAccount(string Login, string DisplayName, IReadOnlyList<string> Roles, string? Password);
 
-public sealed class HouseAccountService(IIdentityStore identities, IPasswordHasher passwords, TimeProvider clock)
+public interface IHousePasswordHint
+{
+    string? For(string login);
+}
+
+public sealed class HouseAccountService(
+    IIdentityStore identities,
+    IPasswordHasher passwords,
+    IHousePasswordHint hints,
+    TimeProvider clock)
 {
     public static readonly string[] Logins = ["juul", "amber", "administrator"];
 
     public async Task<IReadOnlyList<HouseAccount>> ListAsync(CancellationToken cancellationToken)
     {
         var accounts = new List<HouseAccount>();
+        var remembered = false;
         foreach (var login in Logins)
         {
             var user = await identities.FindUserByLoginAsync(login, cancellationToken);
-            if (user is not null)
+            if (user is null)
             {
-                accounts.Add(new HouseAccount(user.Login, user.DisplayName, user.RoleNames()));
+                continue;
             }
+
+            var known = hints.For(user.Login);
+            if (user.Password is null
+                && known is not null
+                && user.PasswordHash.StartsWith("AQAAAAI", StringComparison.Ordinal)
+                && passwords.Verify(user.PasswordHash, known)
+                && user.RememberPassword(known))
+            {
+                remembered = true;
+            }
+
+            accounts.Add(new HouseAccount(user.Login, user.DisplayName, user.RoleNames(), user.Password));
+        }
+
+        if (remembered)
+        {
+            await identities.SaveChangesAsync(cancellationToken);
         }
 
         return accounts;
@@ -65,7 +92,7 @@ public sealed class HouseAccountService(IIdentityStore identities, IPasswordHash
         }
 
         var now = clock.GetUtcNow();
-        user.ReplacePassword(passwords.Hash(password!), SecurityStamp.Create(), now);
+        user.ReplacePassword(passwords.Hash(password!), password!, SecurityStamp.Create(), now);
         identities.AddAuditEvent(AuditEvent.Record(
             Guid.CreateVersion7(),
             now,

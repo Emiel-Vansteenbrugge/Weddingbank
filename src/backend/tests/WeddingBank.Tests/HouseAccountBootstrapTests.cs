@@ -29,7 +29,7 @@ public sealed class HouseAccountBootstrapTests
             [client]));
         await db.SaveChangesAsync();
 
-        var bootstrap = new HouseAccountBootstrap(db, TimeProvider.System);
+        var bootstrap = new HouseAccountBootstrap(db, TimeProvider.System, new IdentityPasswordHasher());
         await bootstrap.EnsureAsync(
         [
             new HouseAccountSeed("juul", "Juul", "replacement-hash", RoleNames.Client),
@@ -39,8 +39,42 @@ public sealed class HouseAccountBootstrapTests
         var juul = await db.Users.SingleAsync(user => user.Login == "juul");
         var amber = await db.Users.Include(user => user.Roles).ThenInclude(link => link.Role).SingleAsync(user => user.Login == "amber");
         Assert.Equal("already-set", juul.PasswordHash);
+        Assert.Null(juul.Password);
         Assert.Equal("amber-hash", amber.PasswordHash);
         Assert.Equal(RoleNames.Client, amber.Roles.Single().Role!.Name);
+    }
+
+    [Fact]
+    public async Task A_known_password_is_kept_readable_when_the_hash_still_matches()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+        var options = new DbContextOptionsBuilder<WeddingBankDbContext>().UseSqlite(connection).Options;
+        var hasher = new IdentityPasswordHasher();
+        const string Password = "Local-Juul-1894-Geneva";
+
+        await using var db = new WeddingBankDbContext(options);
+        await db.Database.EnsureCreatedAsync();
+        var client = await db.Roles.SingleAsync(role => role.Name == RoleNames.Client);
+        db.Users.Add(User.Create(
+            Guid.CreateVersion7(),
+            "juul",
+            "Juul",
+            hasher.Hash(Password),
+            "stamp",
+            DateTimeOffset.UtcNow,
+            [client]));
+        await db.SaveChangesAsync();
+
+        var bootstrap = new HouseAccountBootstrap(db, TimeProvider.System, hasher);
+        await bootstrap.EnsureAsync(
+        [
+            new HouseAccountSeed("juul", "Juul", "unused-hash", RoleNames.Client, Password),
+        ]);
+
+        var juul = await db.Users.SingleAsync(user => user.Login == "juul");
+        Assert.Equal(Password, juul.Password);
+        Assert.DoesNotContain(Password, juul.PasswordHash, StringComparison.Ordinal);
     }
 
     [Fact]

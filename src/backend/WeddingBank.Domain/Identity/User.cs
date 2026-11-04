@@ -19,6 +19,8 @@ public sealed class User
 
     public string PasswordHash { get; private set; } = "";
 
+    public string? Password { get; private set; }
+
     public string SecurityStamp { get; private set; } = "";
 
     public int FailedSignInCount { get; private set; }
@@ -47,7 +49,8 @@ public sealed class User
         string passwordHash,
         string securityStamp,
         DateTimeOffset now,
-        IEnumerable<Role> roles)
+        IEnumerable<Role> roles,
+        string? password = null)
     {
         var user = new User
         {
@@ -55,6 +58,7 @@ public sealed class User
             Login = login,
             DisplayName = displayName,
             PasswordHash = passwordHash,
+            Password = string.IsNullOrEmpty(password) ? null : password,
             SecurityStamp = securityStamp,
             CreatedAt = now,
             UpdatedAt = now,
@@ -105,14 +109,26 @@ public sealed class User
         UpdatedAt = now;
     }
 
-    public void ReplacePassword(string passwordHash, string securityStamp, DateTimeOffset now)
+    public bool RememberPassword(string? password)
     {
-        if (string.IsNullOrWhiteSpace(passwordHash) || string.IsNullOrWhiteSpace(securityStamp))
+        if (Password is not null || string.IsNullOrEmpty(password) || password.Length > 200)
         {
-            throw new ArgumentException("A password change needs a hash and a new security stamp.");
+            return false;
+        }
+
+        Password = password;
+        return true;
+    }
+
+    public void ReplacePassword(string passwordHash, string password, string securityStamp, DateTimeOffset now)
+    {
+        if (string.IsNullOrWhiteSpace(passwordHash) || string.IsNullOrWhiteSpace(password) || string.IsNullOrWhiteSpace(securityStamp))
+        {
+            throw new ArgumentException("A password change needs a hash, the password, and a new security stamp.");
         }
 
         PasswordHash = passwordHash;
+        Password = password;
         SecurityStamp = securityStamp;
         FailedSignInCount = 0;
         LockoutUntil = null;

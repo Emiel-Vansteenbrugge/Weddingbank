@@ -52,6 +52,7 @@ test('the administrator layout names the desk', () => {
   expect(settings).toContain('amber')
   expect(settings).toContain('administrator')
   expect(settings).toContain('Set password')
+  expect(settings).toContain('not readable yet')
   expect(html).toContain('Sign out')
 })
 

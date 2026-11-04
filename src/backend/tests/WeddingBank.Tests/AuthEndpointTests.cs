@@ -163,6 +163,11 @@ public sealed class AuthEndpointTests : IClassFixture<AuthApiFixture>
             Assert.Equal(HttpStatusCode.Unauthorized, (await LoginAsync(juul, "juul", ClientPassword)).StatusCode);
             Assert.Equal(HttpStatusCode.OK, (await LoginAsync(juul, "juul", Replacement)).StatusCode);
 
+            var visible = await admin.GetStringAsync("/api/admin/house-accounts");
+            Assert.Contains(Replacement, visible, StringComparison.Ordinal);
+            var juulBody = await juul.GetStringAsync("/api/auth/me");
+            Assert.DoesNotContain(Replacement, juulBody, StringComparison.Ordinal);
+
             var audit = await admin.GetStringAsync("/api/admin/audit");
             Assert.Contains("user.password_changed", audit, StringComparison.Ordinal);
             Assert.DoesNotContain(Replacement, audit, StringComparison.Ordinal);

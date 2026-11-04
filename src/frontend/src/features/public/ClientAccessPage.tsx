@@ -11,9 +11,14 @@ export function ClientAccessPage() {
           Access is arranged individually, after a relationship has been accepted, and is provided through the
           relationship manager. There is no public registration.
         </p>
-        <SiteLink href="/contact" className="text-link">
-          Write to the client office
-        </SiteLink>
+        <div className="access-links">
+          <SiteLink href="/login" className="text-link">
+            Sign in
+          </SiteLink>
+          <SiteLink href="/contact" className="text-link">
+            Write to the client office
+          </SiteLink>
+        </div>
       </header>
     </Page>
   )

@@ -7,7 +7,7 @@ internal static class EnquiryEndpoints
 {
     public static void MapEnquiryEndpoints(this WebApplication app)
     {
-        app.MapPost("/api/enquiries", SendAsync).RequireRateLimiting("enquiries");
+        app.MapPost("/api/enquiries", SendAsync).AllowAnonymous().RequireRateLimiting("enquiries");
     }
 
     private static async Task<IResult> SendAsync(

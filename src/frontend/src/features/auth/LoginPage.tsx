@@ -1,9 +1,19 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent, type KeyboardEvent } from 'react'
 import { bank } from '../public/content.ts'
 import { SiteLink } from '../../shared/SiteLink.tsx'
 import { homeFor } from '../../app/routes.ts'
 import { signIn, visit } from './api.ts'
 import { useSession } from './useSession.ts'
+
+function submitOnEnter(event: KeyboardEvent<HTMLFormElement>) {
+  if (event.key !== 'Enter' || event.nativeEvent.isComposing) return
+  const target = event.target
+  if (target instanceof HTMLButtonElement || target instanceof HTMLTextAreaElement) return
+  const submitter = event.currentTarget.querySelector<HTMLButtonElement>('button[type="submit"]')
+  if (!submitter || submitter.disabled) return
+  event.preventDefault()
+  event.currentTarget.requestSubmit(submitter)
+}
 
 export function LoginPage() {
   const session = useSession()
@@ -54,10 +64,10 @@ export function LoginPage() {
       <p className="eyebrow">Client access</p>
       <h1>Sign in</h1>
       <p className="lede">Access is issued by the house. There is no registration.</p>
-      <form className="enquiry gate-form" onSubmit={onSubmit}>
+      <form className="enquiry gate-form" onSubmit={onSubmit} onKeyDown={submitOnEnter}>
         <label>
           Login
-          <input name="login" autoComplete="username" required />
+          <input name="login" type="text" autoComplete="username" required />
         </label>
         <label>
           Password

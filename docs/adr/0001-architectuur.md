@@ -54,7 +54,7 @@ Beheerders zijn aparte accounts met alleen de rol `Administrator`. MFA via TOTP 
 Authenticatie gebruikt een `HttpOnly` cookie met `Secure` en `SameSite=Lax`. `SameSite=Lax` is een extra browserbeperking. Wijzigende verzoeken (`POST`, `PUT`, `PATCH`, `DELETE`) eisen daarnaast:
 
 - een geldig ASP.NET Core-antiforgerytoken in een header;
-- een `Origin`-header die exact overeenkomt met de toegestane origin van die omgeving.
+- een `Origin`-header van de site zelf, of van een toegestane host. Http en https op de standaardpoort van die host gelden allebei.
 
 Ontbreekt `Origin` of hoort die bij een andere site, dan wordt het verzoek geweigerd. Er is geen terugval op `Referer`. GET-verzoeken wijzigen geen toestand. De deelnemers- en beheerinterface blijven same-origin achter de proxy, waardoor geen open CORS-policy nodig is.
 

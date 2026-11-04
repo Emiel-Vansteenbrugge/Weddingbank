@@ -34,13 +34,67 @@ internal static class HouseRequestGuard
         return http.Connection.RemoteIpAddress?.ToString();
     }
 
-    private static bool OriginAllowed(HttpRequest request, AuthOptions options)
+    internal static bool OriginAllowed(HttpRequest request, AuthOptions options)
     {
-        if (!request.Headers.TryGetValue(Microsoft.Net.Http.Headers.HeaderNames.Origin, out var origin))
+        if (!request.Headers.TryGetValue(Microsoft.Net.Http.Headers.HeaderNames.Origin, out var raw))
         {
             return false;
         }
 
-        return options.AllowedOrigins.Contains(origin.ToString(), StringComparer.Ordinal);
+        var origin = raw.ToString().Trim().TrimEnd('/');
+        if (!Uri.TryCreate(origin, UriKind.Absolute, out var originUri) || originUri.Host.Length == 0)
+        {
+            return false;
+        }
+
+        if (originUri.Scheme is not ("https" or "http"))
+        {
+            return false;
+        }
+
+        foreach (var allowed in options.AllowedOrigins)
+        {
+            if (Uri.TryCreate(allowed.Trim().TrimEnd('/'), UriKind.Absolute, out var allowedUri)
+                && SameSite(originUri, allowedUri))
+            {
+                return true;
+            }
+        }
+
+        return HostsOf(request).Any(host => string.Equals(originUri.Authority, host, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static bool SameSite(Uri actual, Uri allowed)
+    {
+        if (!string.Equals(actual.Host, allowed.Host, StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        if (actual.IsDefaultPort && allowed.IsDefaultPort)
+        {
+            return true;
+        }
+
+        return actual.Port == allowed.Port;
+    }
+
+    private static IEnumerable<string> HostsOf(HttpRequest request)
+    {
+        if (request.Host.HasValue)
+        {
+            yield return request.Host.Value;
+        }
+
+        if (!request.Headers.TryGetValue("X-Forwarded-Host", out var forwarded))
+        {
+            yield break;
+        }
+
+        var value = forwarded.ToString().Split(',')[0].Trim();
+        if (value.Length > 0)
+        {
+            yield return value;
+        }
     }
 }

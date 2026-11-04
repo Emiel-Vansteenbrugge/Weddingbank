@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
+    <InternalsVisibleTo Include="WeddingBank.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\WeddingBank.Application\WeddingBank.Application.csproj" />
     <ProjectReference Include="..\WeddingBank.Domain\WeddingBank.Domain.csproj" />
     <ProjectReference Include="..\WeddingBank.Infrastructure\WeddingBank.Infrastructure.csproj" />

@@ -36,12 +36,19 @@ services:
     container_name: weddingbank-api
     restart: unless-stopped
     logging: *logging
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - services
       - data
       - egress
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-weddingbank}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-weddingbank}
+      POSTGRES_DB: ${POSTGRES_DB:-weddingbank}
       RESEND_API_KEY: ${RESEND_API_KEY:-}
       RESEND_FROM_EMAIL: ${RESEND_FROM_EMAIL:-}
     volumes:

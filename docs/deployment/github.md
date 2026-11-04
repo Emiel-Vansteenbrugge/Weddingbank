@@ -31,3 +31,5 @@ docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
 ```
 
 PostgreSQL en de Data Protection-sleutels blijven in hun volumes. Een mislukte healthcheck laat de job falen; de volumes worden niet verwijderd.
+
+De API in productie past de migraties toe bij het opstarten en maakt de aanmeldingen `juul`, `amber` en `administrator` aan wanneer die nog ontbreken. Een account dat al bestaat houdt zijn wachtwoord. De databaseverbinding komt uit `POSTGRES_USER`, `POSTGRES_PASSWORD` en `POSTGRES_DB` in het serverbestand `.env`.

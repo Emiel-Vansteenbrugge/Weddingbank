@@ -20,14 +20,15 @@ public static class IdentityServiceCollectionExtensions
         services.AddScoped<AuthenticationService>();
         services.AddScoped<HouseAccountService>();
         services.AddScoped<DevelopmentUserSeeder>();
+        services.AddScoped<HouseAccountBootstrap>();
 
-        var connectionString = configuration.GetConnectionString("WeddingBank");
-        if (string.IsNullOrWhiteSpace(connectionString))
-        {
-            connectionString = isDevelopment
-                ? WeddingBankDbContextFactory.LocalConnectionString
-                : "Host=invalid;Database=unset;Username=unset;Password=unset";
-        }
+        var connectionString = DatabaseConnection.Resolve(
+            configuration.GetConnectionString("WeddingBank"),
+            configuration["POSTGRES_PASSWORD"],
+            configuration["POSTGRES_HOST"],
+            configuration["POSTGRES_DB"],
+            configuration["POSTGRES_USER"],
+            isDevelopment);
 
         services.AddDbContext<WeddingBankDbContext>(options => options.UseNpgsql(connectionString));
         return services;

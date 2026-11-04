@@ -6,6 +6,7 @@ using WeddingBank.Api.Identity;
 using WeddingBank.Infrastructure.Clients;
 using WeddingBank.Infrastructure.Enquiries;
 using WeddingBank.Infrastructure.Identity;
+using WeddingBank.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -87,7 +88,26 @@ if (args.Contains("--seed-development-users"))
     return;
 }
 
-// Migrations are applied by hand. Do not call Database.Migrate() here.
+if (app.Environment.IsProduction())
+{
+    for (var attempt = 1; ; attempt++)
+    {
+        try
+        {
+            await using var scope = app.Services.CreateAsyncScope();
+            var db = scope.ServiceProvider.GetRequiredService<WeddingBankDbContext>();
+            await DatabaseConnection.ApplyAsync(db);
+            await scope.ServiceProvider.GetRequiredService<HouseAccountBootstrap>().EnsureAsync();
+            break;
+        }
+        catch (Exception) when (attempt < 15)
+        {
+            Console.WriteLine($"Database is not ready (attempt {attempt}).");
+            await Task.Delay(TimeSpan.FromSeconds(2));
+        }
+    }
+}
+
 app.UseForwardedHeaders();
 app.UseRateLimiter();
 app.UseAuthentication();

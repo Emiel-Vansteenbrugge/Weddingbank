@@ -40,9 +40,9 @@ export function Header({ path }: HeaderProps) {
             </SiteLink>
           ))}
           <SiteLink
-            href="/client-access"
+            href="/login"
             className="client-access"
-            current={path === '/client-access'}
+            current={path === '/login'}
             onNavigate={close}
           >
             Client access

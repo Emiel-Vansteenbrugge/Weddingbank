@@ -1,6 +1,6 @@
 import { articles } from '../features/public/content.ts'
 import { AboutPage } from '../features/public/AboutPage.tsx'
-import { ClientAccessPage, NotFoundPage } from '../features/public/ClientAccessPage.tsx'
+import { NotFoundPage } from '../features/public/ClientAccessPage.tsx'
 import { ContactPage } from '../features/public/ContactPage.tsx'
 import { ExpertisePage } from '../features/public/ExpertisePage.tsx'
 import { HomePage } from '../features/public/HomePage.tsx'
@@ -34,7 +34,6 @@ function publicPage(route: Extract<AppRoute, { area: 'public' }>) {
   if (route.page === 'expertise') return <ExpertisePage />
   if (route.page === 'insights') return <InsightsPage />
   if (route.page === 'contact') return <ContactPage />
-  if (route.page === 'client-access') return <ClientAccessPage />
   if (route.page === 'article') {
     const article = articles.find((item) => item.slug === route.slug)
     if (article) return <ArticlePage article={article} />

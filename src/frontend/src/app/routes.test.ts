@@ -5,7 +5,6 @@ test('public rooms keep their existing addresses', () => {
   expect(matchRoute('/')).toEqual({ area: 'public', page: 'home' })
   expect(matchRoute('/about')).toEqual({ area: 'public', page: 'about' })
   expect(matchRoute('/services')).toEqual({ area: 'public', page: 'services' })
-  expect(matchRoute('/client-access')).toEqual({ area: 'public', page: 'client-access' })
   expect(matchRoute('/insights/patience-and-the-private-mandate')).toEqual({
     area: 'public',
     page: 'article',
@@ -19,6 +18,7 @@ test('unknown addresses are refused in the house they belong to', () => {
   expect(matchRoute('/client/vault')).toEqual({ area: 'client', page: 'not-found' })
   expect(matchRoute('/admin/vault')).toEqual({ area: 'admin', page: 'not-found' })
   expect(matchRoute('/login')).toEqual({ area: 'login' })
+  expect(matchRoute('/client-access')).toEqual({ area: 'login' })
   expect(matchRoute('/client/accounts')).toEqual({ area: 'client', page: 'accounts' })
   expect(matchRoute('/client/transactions')).toEqual({ area: 'client', page: 'not-found' })
   expect(matchRoute('/client/archive')).toEqual({ area: 'client', page: 'archive' })

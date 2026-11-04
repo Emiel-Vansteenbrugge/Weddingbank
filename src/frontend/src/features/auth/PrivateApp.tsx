@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useLayoutEffect } from 'react'
 import type { AppRoute } from '../../app/routes.ts'
 import { homeFor } from '../../app/routes.ts'
 import { visit } from './api.ts'
@@ -15,6 +15,12 @@ type PrivateRoute = Exclude<AppRoute, { area: 'public' }>
 export function PrivateApp({ path, route }: { path: string; route: PrivateRoute }) {
   const session = useSession()
   const needsLogin = session.state.status === 'anonymous' && route.area !== 'login'
+
+  useLayoutEffect(() => {
+    if (path !== '/client-access') return
+    window.history.replaceState({}, '', '/login')
+    window.dispatchEvent(new PopStateEvent('popstate'))
+  }, [path])
 
   useEffect(() => {
     if (needsLogin) visit('/login')

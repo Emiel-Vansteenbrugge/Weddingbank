@@ -82,8 +82,8 @@ export function LoginPage() {
           {pending ? 'Signing in' : 'Sign in'}
         </button>
       </form>
-      <SiteLink href="/client-access" className="text-link">
-        Return to client access
+      <SiteLink href="/" className="text-link">
+        Return to the entrance
       </SiteLink>
     </main>
   )

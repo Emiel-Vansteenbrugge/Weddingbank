@@ -8,7 +8,6 @@ export type PublicPage =
   | 'insights'
   | 'article'
   | 'contact'
-  | 'client-access'
   | 'not-found'
 
 export type ClientPageId =
@@ -69,7 +68,7 @@ const adminPages: Record<string, AdminPageId> = {
 }
 
 export function matchRoute(path: string): AppRoute {
-  if (path === '/login') return { area: 'login' }
+  if (path === '/login' || path === '/client-access') return { area: 'login' }
   if (path === '/client' || path.startsWith('/client/')) {
     const clientCase = /^\/client\/cases\/([0-9a-f-]{36})$/i.exec(path)
     if (clientCase) return { area: 'client', page: 'case', caseId: clientCase[1] }
@@ -96,7 +95,6 @@ export function matchRoute(path: string): AppRoute {
   if (path === '/expertise') return { area: 'public', page: 'expertise' }
   if (path === '/insights') return { area: 'public', page: 'insights' }
   if (path === '/contact') return { area: 'public', page: 'contact' }
-  if (path === '/client-access') return { area: 'public', page: 'client-access' }
   if (path.startsWith('/insights/')) {
     const slug = path.slice('/insights/'.length)
     if (articles.some((article) => article.slug === slug)) {

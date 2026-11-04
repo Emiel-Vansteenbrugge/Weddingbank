@@ -48,7 +48,7 @@ export function Footer() {
               {item.label}
             </SiteLink>
           ))}
-          <SiteLink href="/client-access" className="client-access">
+          <SiteLink href="/login" className="client-access">
             Client access
           </SiteLink>
         </nav>

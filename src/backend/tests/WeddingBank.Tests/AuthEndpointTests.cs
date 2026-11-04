@@ -39,7 +39,7 @@ public sealed class AuthEndpointTests : IClassFixture<AuthApiFixture>
 
         var me = await client.GetAsync("/api/auth/me");
         Assert.Equal(HttpStatusCode.OK, me.StatusCode);
-        Assert.Contains("juul", await me.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        Assert.Contains("Juul-V", await me.Content.ReadAsStringAsync(), StringComparison.Ordinal);
     }
 
     [Fact]
@@ -146,8 +146,8 @@ public sealed class AuthEndpointTests : IClassFixture<AuthApiFixture>
         Assert.Equal(HttpStatusCode.OK, (await LoginAsync(admin, "administrator", AdminPassword)).StatusCode);
 
         var accounts = await admin.GetStringAsync("/api/admin/house-accounts");
-        Assert.Contains("juul", accounts, StringComparison.Ordinal);
-        Assert.Contains("amber", accounts, StringComparison.Ordinal);
+        Assert.Contains("Juul-V", accounts, StringComparison.Ordinal);
+        Assert.Contains("Amber-D", accounts, StringComparison.Ordinal);
         Assert.Contains("administrator", accounts, StringComparison.Ordinal);
 
         try
@@ -264,7 +264,7 @@ public sealed class AuthApiFixture : IDisposable
         var now = DateTimeOffset.UtcNow;
         store.AddUser(User.Create(
             Guid.CreateVersion7(),
-            "juul",
+            "Juul-V",
             "Juul",
             hasher.Hash(ClientPassword),
             SecurityStamp.Create(),
@@ -272,7 +272,7 @@ public sealed class AuthApiFixture : IDisposable
             [new Role(RoleNames.ClientId, RoleNames.Client)]));
         store.AddUser(User.Create(
             Guid.CreateVersion7(),
-            "amber",
+            "Amber-D",
             "Amber",
             hasher.Hash(ClientPassword),
             SecurityStamp.Create(),

@@ -2,8 +2,8 @@ namespace WeddingBank.Domain.Game;
 
 public static class Participants
 {
-    public const string Juul = "juul";
-    public const string Amber = "amber";
+    public const string Juul = "Juul-V";
+    public const string Amber = "Amber-D";
 
     public static readonly string[] Logins = [Juul, Amber];
 

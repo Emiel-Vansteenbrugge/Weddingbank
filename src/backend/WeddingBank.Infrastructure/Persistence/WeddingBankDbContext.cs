@@ -102,7 +102,7 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
             entity.HasIndex(item => new { item.Scope, item.ParticipantLogin, item.Code });
             entity.ToTable(table => table.HasCheckConstraint(
                 "CK_Assignments_Scope",
-                "(\"Scope\" = 'SHARED' AND \"ParticipantLogin\" IS NULL) OR (\"Scope\" = 'INDIVIDUAL' AND \"ParticipantLogin\" IN ('juul', 'amber'))"));
+                $"(\"Scope\" = 'SHARED' AND \"ParticipantLogin\" IS NULL) OR (\"Scope\" = 'INDIVIDUAL' AND \"ParticipantLogin\" IN ('{Participants.Juul}', '{Participants.Amber}'))"));
         });
 
         modelBuilder.Entity<Notice>(entity =>
@@ -112,7 +112,7 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
             entity.Property(notice => notice.Body).HasMaxLength(4000).IsRequired();
             entity.ToTable(table => table.HasCheckConstraint(
                 "CK_Notices_Audience",
-                "\"Kind\" IN ('HINT', 'MESSAGE') AND (\"ParticipantLogin\" IS NULL OR \"ParticipantLogin\" IN ('juul', 'amber'))"));
+                $"\"Kind\" IN ('HINT', 'MESSAGE') AND (\"ParticipantLogin\" IS NULL OR \"ParticipantLogin\" IN ('{Participants.Juul}', '{Participants.Amber}'))"));
         });
 
         modelBuilder.Entity<PhoneCall>(entity =>
@@ -121,7 +121,7 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
             entity.Property(call => call.Summary).HasMaxLength(500).IsRequired();
             entity.ToTable(table => table.HasCheckConstraint(
                 "CK_PhoneCalls_Participant",
-                "\"ParticipantLogin\" IN ('juul', 'amber')"));
+                $"\"ParticipantLogin\" IN ('{Participants.Juul}', '{Participants.Amber}')"));
         });
 
         modelBuilder.Entity<Activity>(entity =>
@@ -144,7 +144,7 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
             entity.HasIndex(submission => submission.Outcome);
             entity.ToTable(table => table.HasCheckConstraint(
                 "CK_Submissions_Outcome",
-                "\"Outcome\" IN ('PENDING', 'ACCEPTED', 'REFUSED') AND \"ParticipantLogin\" IN ('juul', 'amber')"));
+                $"\"Outcome\" IN ('PENDING', 'ACCEPTED', 'REFUSED') AND \"ParticipantLogin\" IN ('{Participants.Juul}', '{Participants.Amber}')"));
         });
 
         modelBuilder.Entity<CaseFile>(entity =>

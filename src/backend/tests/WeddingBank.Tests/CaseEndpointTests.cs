@@ -229,8 +229,8 @@ public sealed class CaseApiFixture : IDisposable
         var identities = new InMemoryIdentityStore();
         var hasher = new IdentityPasswordHasher();
         var now = DateTimeOffset.UtcNow;
-        identities.Add(User.Create(Guid.CreateVersion7(), "juul", "Juul", hasher.Hash(ClientPassword), SecurityStamp.Create(), now, [new Role(RoleNames.ClientId, RoleNames.Client)]));
-        identities.Add(User.Create(Guid.CreateVersion7(), "amber", "Amber", hasher.Hash(ClientPassword), SecurityStamp.Create(), now, [new Role(RoleNames.ClientId, RoleNames.Client)]));
+        identities.Add(User.Create(Guid.CreateVersion7(), "Juul-V", "Juul", hasher.Hash(ClientPassword), SecurityStamp.Create(), now, [new Role(RoleNames.ClientId, RoleNames.Client)]));
+        identities.Add(User.Create(Guid.CreateVersion7(), "Amber-D", "Amber", hasher.Hash(ClientPassword), SecurityStamp.Create(), now, [new Role(RoleNames.ClientId, RoleNames.Client)]));
         identities.Add(User.Create(Guid.CreateVersion7(), "administrator", "Administrator", hasher.Hash(AdminPassword), SecurityStamp.Create(), now, [new Role(RoleNames.AdminId, RoleNames.Admin)]));
 
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>

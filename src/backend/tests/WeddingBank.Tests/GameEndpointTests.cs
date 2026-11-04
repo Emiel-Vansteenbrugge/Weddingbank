@@ -29,8 +29,8 @@ public sealed class GameEndpointTests : IClassFixture<GameApiFixture>
         var overview = await admin.GetFromJsonAsync<OverviewBody>("/api/admin/game");
         Assert.NotNull(overview);
         Assert.Equal("NOT_STARTED", overview.Status);
-        Assert.Equal("juul", overview.Juul.Login);
-        Assert.Equal("amber", overview.Amber.Login);
+        Assert.Equal("Juul-V", overview.Juul.Login);
+        Assert.Equal("Amber-D", overview.Amber.Login);
         Assert.Equal("Not started", overview.Juul.Stage);
         Assert.Equal("Not started", overview.Shared.Stage);
         Assert.Equal(HttpStatusCode.NotFound, (await admin.GetAsync("/api/admin/game/participants/administrator")).StatusCode);
@@ -41,7 +41,7 @@ public sealed class GameEndpointTests : IClassFixture<GameApiFixture>
         Assert.Equal(HttpStatusCode.OK, (await LoginAsync(juul, "juul", GameApiFixture.ClientPassword)).StatusCode);
         var desk = await juul.GetFromJsonAsync<DeskBody>("/api/client/desk");
         Assert.NotNull(desk);
-        Assert.Equal("juul", desk.Login);
+        Assert.Equal("Juul-V", desk.Login);
         Assert.Equal("Juul", desk.Account.Holder);
         Assert.Equal("Private account", desk.Account.Title);
         Assert.DoesNotContain("Amber", desk.Account.Holder, StringComparison.Ordinal);
@@ -91,8 +91,8 @@ public sealed class GameApiFixture : IDisposable
         var store = new InMemoryIdentityStore();
         var hasher = new IdentityPasswordHasher();
         var now = DateTimeOffset.UtcNow;
-        store.Add(User.Create(Guid.CreateVersion7(), "juul", "Juul", hasher.Hash(ClientPassword), SecurityStamp.Create(), now, [new Role(RoleNames.ClientId, RoleNames.Client)]));
-        store.Add(User.Create(Guid.CreateVersion7(), "amber", "Amber", hasher.Hash(ClientPassword), SecurityStamp.Create(), now, [new Role(RoleNames.ClientId, RoleNames.Client)]));
+        store.Add(User.Create(Guid.CreateVersion7(), "Juul-V", "Juul", hasher.Hash(ClientPassword), SecurityStamp.Create(), now, [new Role(RoleNames.ClientId, RoleNames.Client)]));
+        store.Add(User.Create(Guid.CreateVersion7(), "Amber-D", "Amber", hasher.Hash(ClientPassword), SecurityStamp.Create(), now, [new Role(RoleNames.ClientId, RoleNames.Client)]));
         store.Add(User.Create(Guid.CreateVersion7(), "administrator", "Administrator", hasher.Hash(AdminPassword), SecurityStamp.Create(), now, [new Role(RoleNames.AdminId, RoleNames.Admin)]));
 
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>

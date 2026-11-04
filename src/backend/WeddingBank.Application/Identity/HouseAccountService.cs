@@ -1,4 +1,5 @@
 using WeddingBank.Application;
+using WeddingBank.Domain.Game;
 using WeddingBank.Domain.Identity;
 
 namespace WeddingBank.Application.Identity;
@@ -16,7 +17,7 @@ public sealed class HouseAccountService(
     IHousePasswordHint hints,
     TimeProvider clock)
 {
-    public static readonly string[] Logins = ["juul", "amber", "administrator"];
+    public static readonly string[] Logins = [Participants.Juul, Participants.Amber, "administrator"];
 
     public async Task<IReadOnlyList<HouseAccount>> ListAsync(CancellationToken cancellationToken)
     {

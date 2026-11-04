@@ -89,7 +89,7 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
 
                     b.ToTable("Assignments", t =>
                         {
-                            t.HasCheckConstraint("CK_Assignments_Scope", "(\"Scope\" = 'SHARED' AND \"ParticipantLogin\" IS NULL) OR (\"Scope\" = 'INDIVIDUAL' AND \"ParticipantLogin\" IN ('juul', 'amber'))");
+                            t.HasCheckConstraint("CK_Assignments_Scope", "(\"Scope\" = 'SHARED' AND \"ParticipantLogin\" IS NULL) OR (\"Scope\" = 'INDIVIDUAL' AND \"ParticipantLogin\" IN ('Juul-V', 'Amber-D'))");
                         });
                 });
 
@@ -247,7 +247,7 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
 
                     b.ToTable("Notices", t =>
                         {
-                            t.HasCheckConstraint("CK_Notices_Audience", "\"Kind\" IN ('HINT', 'MESSAGE') AND (\"ParticipantLogin\" IS NULL OR \"ParticipantLogin\" IN ('juul', 'amber'))");
+                            t.HasCheckConstraint("CK_Notices_Audience", "\"Kind\" IN ('HINT', 'MESSAGE') AND (\"ParticipantLogin\" IS NULL OR \"ParticipantLogin\" IN ('Juul-V', 'Amber-D'))");
                         });
                 });
 
@@ -280,7 +280,7 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
 
                     b.ToTable("PhoneCalls", t =>
                         {
-                            t.HasCheckConstraint("CK_PhoneCalls_Participant", "\"ParticipantLogin\" IN ('juul', 'amber')");
+                            t.HasCheckConstraint("CK_PhoneCalls_Participant", "\"ParticipantLogin\" IN ('Juul-V', 'Amber-D')");
                         });
                 });
 
@@ -317,7 +317,7 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
 
                     b.ToTable("Submissions", t =>
                         {
-                            t.HasCheckConstraint("CK_Submissions_Outcome", "\"Outcome\" IN ('PENDING', 'ACCEPTED', 'REFUSED') AND \"ParticipantLogin\" IN ('juul', 'amber')");
+                            t.HasCheckConstraint("CK_Submissions_Outcome", "\"Outcome\" IN ('PENDING', 'ACCEPTED', 'REFUSED') AND \"ParticipantLogin\" IN ('Juul-V', 'Amber-D')");
                         });
                 });
 

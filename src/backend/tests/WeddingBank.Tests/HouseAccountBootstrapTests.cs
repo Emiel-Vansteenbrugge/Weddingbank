@@ -21,7 +21,7 @@ public sealed class HouseAccountBootstrapTests
         var client = await db.Roles.SingleAsync(role => role.Name == RoleNames.Client);
         db.Users.Add(User.Create(
             Guid.CreateVersion7(),
-            "juul",
+            "Juul-V",
             "Juul",
             "already-set",
             "stamp",
@@ -32,12 +32,12 @@ public sealed class HouseAccountBootstrapTests
         var bootstrap = new HouseAccountBootstrap(db, TimeProvider.System, new IdentityPasswordHasher());
         await bootstrap.EnsureAsync(
         [
-            new HouseAccountSeed("juul", "Juul", "replacement-hash", RoleNames.Client),
-            new HouseAccountSeed("amber", "Amber", "amber-hash", RoleNames.Client),
+            new HouseAccountSeed("Juul-V", "Juul", "replacement-hash", RoleNames.Client),
+            new HouseAccountSeed("Amber-D", "Amber", "amber-hash", RoleNames.Client),
         ]);
 
-        var juul = await db.Users.SingleAsync(user => user.Login == "juul");
-        var amber = await db.Users.Include(user => user.Roles).ThenInclude(link => link.Role).SingleAsync(user => user.Login == "amber");
+        var juul = await db.Users.SingleAsync(user => user.Login == "Juul-V");
+        var amber = await db.Users.Include(user => user.Roles).ThenInclude(link => link.Role).SingleAsync(user => user.Login == "Amber-D");
         Assert.Equal("already-set", juul.PasswordHash);
         Assert.Null(juul.Password);
         Assert.Equal("amber-hash", amber.PasswordHash);
@@ -58,7 +58,7 @@ public sealed class HouseAccountBootstrapTests
         var client = await db.Roles.SingleAsync(role => role.Name == RoleNames.Client);
         db.Users.Add(User.Create(
             Guid.CreateVersion7(),
-            "juul",
+            "Juul-V",
             "Juul",
             hasher.Hash(Password),
             "stamp",
@@ -72,7 +72,7 @@ public sealed class HouseAccountBootstrapTests
             new HouseAccountSeed("juul", "Juul", "unused-hash", RoleNames.Client, Password),
         ]);
 
-        var juul = await db.Users.SingleAsync(user => user.Login == "juul");
+        var juul = await db.Users.SingleAsync(user => user.Login == "Juul-V");
         Assert.Equal(Password, juul.Password);
         Assert.DoesNotContain(Password, juul.PasswordHash, StringComparison.Ordinal);
     }

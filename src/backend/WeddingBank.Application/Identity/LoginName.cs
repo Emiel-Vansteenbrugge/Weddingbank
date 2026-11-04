@@ -1,3 +1,5 @@
+using WeddingBank.Domain.Game;
+
 namespace WeddingBank.Application.Identity;
 
 public static class LoginName
@@ -11,12 +13,22 @@ public static class LoginName
             return null;
         }
 
-        var login = value.Trim().ToLowerInvariant();
+        var login = value.Trim();
         if (login.Length is < 1 or > MaxLength || login.Any(char.IsControl))
         {
             return null;
         }
 
-        return login;
+        if (login.Equals("juul", StringComparison.OrdinalIgnoreCase) || login.Equals(Participants.Juul, StringComparison.OrdinalIgnoreCase))
+        {
+            return Participants.Juul;
+        }
+
+        if (login.Equals("amber", StringComparison.OrdinalIgnoreCase) || login.Equals(Participants.Amber, StringComparison.OrdinalIgnoreCase))
+        {
+            return Participants.Amber;
+        }
+
+        return login.ToLowerInvariant();
     }
 }

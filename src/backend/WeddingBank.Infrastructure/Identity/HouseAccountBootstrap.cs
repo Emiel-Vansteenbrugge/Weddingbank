@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using WeddingBank.Application.Identity;
+using WeddingBank.Domain.Game;
 using WeddingBank.Domain.Identity;
 using WeddingBank.Infrastructure.Persistence;
 
@@ -12,8 +13,8 @@ public sealed class HouseAccountBootstrap(WeddingBankDbContext db, TimeProvider 
 {
     public static readonly HouseAccountSeed[] Accounts =
     [
-        new("juul", "Juul", "AQAAAAIAAYagAAAAEJ0gB3Q6Bp58zo1zxAUMzhGwOD8eag0DSWSI9ld+IQFt+gYzcfwqydiGe4nHMfSwKQ==", RoleNames.Client, "Local-Juul-1894-Geneva"),
-        new("amber", "Amber", "AQAAAAIAAYagAAAAEIibCK5TQIOsnF1h2BUUF0MMgIcj50fLbkLyVQxHbDIm/gcEG7GFaD6ci4rrRcoxog==", RoleNames.Client, "Local-Amber-1894-Zurich"),
+        new(Participants.Juul, "Juul", "AQAAAAIAAYagAAAAEJ0gB3Q6Bp58zo1zxAUMzhGwOD8eag0DSWSI9ld+IQFt+gYzcfwqydiGe4nHMfSwKQ==", RoleNames.Client, "Local-Juul-1894-Geneva"),
+        new(Participants.Amber, "Amber", "AQAAAAIAAYagAAAAEIibCK5TQIOsnF1h2BUUF0MMgIcj50fLbkLyVQxHbDIm/gcEG7GFaD6ci4rrRcoxog==", RoleNames.Client, "Local-Amber-1894-Zurich"),
         new("administrator", "Administrator", "AQAAAAIAAYagAAAAEGGO5lhiny1DvmNAncOIs+044SHsctECCFsOtvpmDpYXg9bQWKEe7ImOHMwn8FZmfQ==", RoleNames.Admin, "Local-Admin-1894-House"),
     ];
 
@@ -81,7 +82,7 @@ public sealed class ConfiguredHousePasswords(IOptions<AuthOptions> options) : IH
     {
         foreach (var entry in options.Value.DevelopmentUsers)
         {
-            if (string.Equals(entry.Login, login, StringComparison.OrdinalIgnoreCase) && entry.Password.Length > 0)
+            if (LoginName.Normalize(entry.Login) == login && entry.Password.Length > 0)
             {
                 return entry.Password;
             }
@@ -89,7 +90,7 @@ public sealed class ConfiguredHousePasswords(IOptions<AuthOptions> options) : IH
 
         foreach (var account in HouseAccountBootstrap.Accounts)
         {
-            if (string.Equals(account.Login, login, StringComparison.Ordinal) && !string.IsNullOrEmpty(account.Password))
+            if (LoginName.Normalize(account.Login) == login && !string.IsNullOrEmpty(account.Password))
             {
                 return account.Password;
             }

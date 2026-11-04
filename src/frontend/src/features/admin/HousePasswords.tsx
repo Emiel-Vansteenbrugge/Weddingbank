@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { mutationHeaders, readFailure } from '../auth/api.ts'
 
-const houseLogins = ['juul', 'amber', 'administrator'] as const
+const houseLogins = ['Juul-V', 'Amber-D', 'administrator'] as const
 
 type HouseAccount = {
   login: string

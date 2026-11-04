@@ -2,6 +2,7 @@ using System.Security.Claims;
 using WeddingBank.Api.Identity;
 using WeddingBank.Application;
 using WeddingBank.Application.Game;
+using WeddingBank.Application.Identity;
 
 namespace WeddingBank.Api.Game;
 
@@ -124,7 +125,7 @@ internal static class CaseEndpoints
 
     private static string? ParticipantLogin(ClaimsPrincipal principal)
     {
-        return principal.FindFirstValue(HouseAuthenticationExtensions.LoginClaim);
+        return LoginName.Normalize(principal.FindFirstValue(HouseAuthenticationExtensions.LoginClaim));
     }
 
     private static CaseDraft Draft(CaseWriteRequest request)

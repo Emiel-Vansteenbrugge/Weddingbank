@@ -77,8 +77,14 @@ export function matchRoute(path: string): AppRoute {
     return { area: 'client', page: clientPages[path] ?? 'not-found' }
   }
   if (path === '/admin' || path.startsWith('/admin/')) {
-    if (path === '/admin/participants/juul' || path === '/admin/participants/amber') {
-      return { area: 'admin', page: 'participant', participant: path.slice('/admin/participants/'.length) }
+    if (path.startsWith('/admin/participants/')) {
+      const participant = path.slice('/admin/participants/'.length).toLowerCase()
+      if (participant === 'juul' || participant === 'juul-v') {
+        return { area: 'admin', page: 'participant', participant: 'Juul-V' }
+      }
+      if (participant === 'amber' || participant === 'amber-d') {
+        return { area: 'admin', page: 'participant', participant: 'Amber-D' }
+      }
     }
     if (path === '/admin/cases/new') return { area: 'admin', page: 'case', caseId: 'new' }
     const adminDocument = /^\/admin\/cases\/([0-9a-f-]{36})\/documents\/(new|[0-9a-f-]{36})$/i.exec(path)

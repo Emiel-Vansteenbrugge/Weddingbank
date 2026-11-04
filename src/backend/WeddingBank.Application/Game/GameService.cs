@@ -52,10 +52,13 @@ public sealed class GameService(IIdentityStore identities, IGameStore games)
 
     public async Task<ParticipantDesk?> DeskAsync(string login, CancellationToken cancellationToken)
     {
-        if (!Participants.IsParticipant(login))
+        var normalized = LoginName.Normalize(login);
+        if (normalized is null || !Participants.IsParticipant(normalized))
         {
             return null;
         }
+
+        login = normalized;
 
         var counts = await games.ReadCountsAsync(cancellationToken);
         var user = await identities.FindUserByLoginAsync(login, cancellationToken);

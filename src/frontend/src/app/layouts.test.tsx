@@ -9,7 +9,7 @@ import { NotFoundPage } from '../features/public/ClientAccessPage.tsx'
 test('the client layout names the record and keeps the desk out', () => {
   const html = renderToStaticMarkup(
     <ClientLayout path="/client" displayName="Juul" onLogout={async () => {}}>
-      <ClientPages page="dashboard" displayName="Juul" login="juul" />
+      <ClientPages page="dashboard" displayName="Juul" login="Juul-V" />
     </ClientLayout>,
   )
   expect(html).toContain('Opening your record')
@@ -48,8 +48,8 @@ test('the administrator layout names the desk', () => {
     </AdminLayout>,
   )
   expect(settings).toContain('House sign-ins')
-  expect(settings).toContain('juul')
-  expect(settings).toContain('amber')
+  expect(settings).toContain('Juul-V')
+  expect(settings).toContain('Amber-D')
   expect(settings).toContain('administrator')
   expect(settings).toContain('Set password')
   expect(settings).toContain('not readable yet')
@@ -59,7 +59,7 @@ test('the administrator layout names the desk', () => {
 test('unknown rooms stay inside the house that owns them', () => {
   const client = renderToStaticMarkup(
     <ClientLayout path="/client/vault" displayName="Juul" onLogout={async () => {}}>
-      <ClientPages page="not-found" displayName="Juul" login="juul" />
+      <ClientPages page="not-found" displayName="Juul" login="Juul-V" />
     </ClientLayout>,
   )
   expect(client).toContain('not part of the record')

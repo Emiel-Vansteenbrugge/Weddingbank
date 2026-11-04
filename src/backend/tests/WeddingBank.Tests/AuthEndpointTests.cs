@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using WeddingBank.Application.Game;
 using WeddingBank.Application.Identity;
 using WeddingBank.Domain.Identity;
 using WeddingBank.Infrastructure.Identity;
@@ -111,8 +112,8 @@ public sealed class AuthEndpointTests : IClassFixture<AuthApiFixture>
         using var client = _fixture.CreateClient();
 
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/auth/me")).StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/client/profile")).StatusCode);
-        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/admin/overview")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/client/desk")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/admin/game")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/admin/audit")).StatusCode);
     }
 
@@ -122,9 +123,9 @@ public sealed class AuthEndpointTests : IClassFixture<AuthApiFixture>
         using var client = _fixture.CreateClient();
         Assert.Equal(HttpStatusCode.OK, (await LoginAsync(client, "juul", ClientPassword)).StatusCode);
 
-        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/admin/overview")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/admin/game")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/admin/audit")).StatusCode);
-        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/client/profile")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/client/desk")).StatusCode);
     }
 
     [Fact]
@@ -133,8 +134,8 @@ public sealed class AuthEndpointTests : IClassFixture<AuthApiFixture>
         using var client = _fixture.CreateClient();
         Assert.Equal(HttpStatusCode.OK, (await LoginAsync(client, "administrator", AdminPassword)).StatusCode);
 
-        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/admin/overview")).StatusCode);
-        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/client/profile")).StatusCode);
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/admin/game")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/client/desk")).StatusCode);
     }
 
     [Fact]
@@ -288,6 +289,8 @@ public sealed class AuthApiFixture : IDisposable
             {
                 services.RemoveAll<IIdentityStore>();
                 services.AddSingleton<IIdentityStore>(store);
+                services.RemoveAll<IGameStore>();
+                services.AddSingleton<IGameStore, EmptyGameStore>();
             });
         });
     }
@@ -306,6 +309,14 @@ public sealed class AuthApiFixture : IDisposable
     public void Dispose()
     {
         Factory.Dispose();
+    }
+
+    private sealed class EmptyGameStore : IGameStore
+    {
+        public Task<ProgressCounts> ReadCountsAsync(CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new ProgressCounts(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, null, null));
+        }
     }
 
     private sealed class InMemoryIdentityStore : IIdentityStore

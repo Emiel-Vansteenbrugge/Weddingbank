@@ -1,10 +1,10 @@
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
-using WeddingBank.Api.Clients;
 using WeddingBank.Api.Enquiries;
+using WeddingBank.Api.Game;
 using WeddingBank.Api.Identity;
-using WeddingBank.Infrastructure.Clients;
 using WeddingBank.Infrastructure.Enquiries;
+using WeddingBank.Infrastructure.Game;
 using WeddingBank.Infrastructure.Identity;
 using WeddingBank.Infrastructure.Persistence;
 
@@ -37,7 +37,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(options =>
 });
 builder.Services.AddResend(builder.Configuration);
 builder.Services.AddWeddingBankIdentity(builder.Configuration, builder.Environment.IsDevelopment());
-builder.Services.AddClientDirectory();
+builder.Services.AddGame();
 builder.Services.AddHouseAuthentication(builder.Environment.IsDevelopment());
 builder.Services.AddRateLimiter(options =>
 {
@@ -115,7 +115,7 @@ app.UseAuthorization();
 app.MapHealthChecks("/health").AllowAnonymous();
 app.MapEnquiryEndpoints();
 app.MapAuthEndpoints();
-app.MapClientEndpoints();
+app.MapGameEndpoints();
 
 app.Run();
 

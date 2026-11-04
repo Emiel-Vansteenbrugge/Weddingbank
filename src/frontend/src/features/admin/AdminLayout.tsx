@@ -4,11 +4,11 @@ import { SiteLink } from '../../shared/SiteLink.tsx'
 import { isCurrentPage } from '../../app/routes.ts'
 
 const links = [
-  { href: '/admin', label: 'Overview' },
-  { href: '/admin/participants', label: 'Clients' },
+  { href: '/admin', label: 'Dashboard' },
+  { href: '/admin/participants', label: 'Participants' },
   { href: '/admin/cases', label: 'Cases' },
   { href: '/admin/tasks', label: 'Tasks' },
-  { href: '/admin/communications', label: 'Communications' },
+  { href: '/admin/hints', label: 'Hints & messages' },
   { href: '/admin/phone-requests', label: 'Phone requests' },
   { href: '/admin/events', label: 'Events' },
   { href: '/admin/audit-log', label: 'Audit log' },
@@ -48,8 +48,8 @@ export function AdminLayout({ path, displayName, onLogout, children }: AdminLayo
         <SiteLink href="/admin" className="desk-mark">
           <img src="/brand/ambre-jules.png" alt={bank.name} />
         </SiteLink>
-        <p className="desk-kicker">Operations</p>
-        <nav className="desk-nav" aria-label="Administration">
+        <p className="desk-kicker">Game</p>
+        <nav className="desk-nav" aria-label="Game">
           {links.map((item) => (
             <SiteLink key={item.href} href={item.href} current={isCurrentPage(path, item.href)}>
               {item.label}

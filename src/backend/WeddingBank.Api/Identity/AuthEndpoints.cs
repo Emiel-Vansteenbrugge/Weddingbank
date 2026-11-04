@@ -2,7 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using WeddingBank.Application.Clients;
+using WeddingBank.Application;
 using WeddingBank.Application.Identity;
 using HouseSignIn = WeddingBank.Application.Identity.AuthenticationService;
 
@@ -26,14 +26,6 @@ internal static class AuthEndpoints
             .AllowAnonymous()
             .AddEndpointFilter(HouseRequestGuard.Invoke);
         app.MapGet("/api/auth/me", MeAsync).RequireAuthorization();
-
-        app.MapGet("/api/admin/overview", () => Results.Ok(new
-            {
-                participants = Array.Empty<object>(),
-                tasks = Array.Empty<object>(),
-                events = Array.Empty<object>(),
-            }))
-            .RequireAuthorization("Admin");
 
         app.MapGet("/api/admin/audit", AuditAsync).RequireAuthorization("Admin");
         app.MapGet("/api/admin/house-accounts", ListHouseAccountsAsync).RequireAuthorization("Admin");

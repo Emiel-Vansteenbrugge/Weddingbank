@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using WeddingBank.Domain.Clients;
+using WeddingBank.Domain.Game;
 using WeddingBank.Domain.Identity;
 
 namespace WeddingBank.Infrastructure.Persistence;
@@ -16,9 +16,15 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
 
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
 
-    public DbSet<Client> Clients => Set<Client>();
+    public DbSet<Assignment> Assignments => Set<Assignment>();
 
-    public DbSet<ClientUser> ClientUsers => Set<ClientUser>();
+    public DbSet<Notice> Notices => Set<Notice>();
+
+    public DbSet<PhoneCall> PhoneCalls => Set<PhoneCall>();
+
+    public DbSet<Activity> Activities => Set<Activity>();
+
+    public DbSet<Submission> Submissions => Set<Submission>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -80,52 +86,61 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
                 .OnDelete(DeleteBehavior.SetNull);
         });
 
-        modelBuilder.Entity<Client>(entity =>
+        modelBuilder.Entity<Assignment>(entity =>
         {
-            entity.Property(client => client.ClientReference).HasMaxLength(ClientReferenceCode.Length).IsRequired();
-            entity.Property(client => client.LegalName).HasMaxLength(ClientFields.LegalNameMax).IsRequired();
-            entity.Property(client => client.DisplayName).HasMaxLength(ClientFields.DisplayNameMax);
-            entity.Property(client => client.EmailAddress).HasMaxLength(ClientFields.EmailMax).IsRequired();
-            entity.Property(client => client.PhoneNumber).HasMaxLength(ClientFields.PhoneMax);
-            entity.Property(client => client.AddressLine1).HasMaxLength(ClientFields.AddressMax);
-            entity.Property(client => client.AddressLine2).HasMaxLength(ClientFields.AddressMax);
-            entity.Property(client => client.PostalCode).HasMaxLength(ClientFields.PostalMax);
-            entity.Property(client => client.City).HasMaxLength(ClientFields.CityMax);
-            entity.Property(client => client.Country).HasMaxLength(ClientFields.CountryMax);
-            entity.Property(client => client.Status)
-                .HasConversion(status => ClientStatuses.ToName(status), name => ParseStatus(name))
+            entity.Property(item => item.Code).HasMaxLength(80).IsRequired();
+            entity.Property(item => item.ParticipantLogin).HasMaxLength(LoginMax);
+            entity.Property(item => item.Scope)
+                .HasConversion(scope => ProgressScopes.ToName(scope), name => ProgressScopes.Parse(name))
                 .HasMaxLength(16)
                 .IsRequired();
-            entity.HasIndex(client => client.ClientReference).IsUnique();
-            entity.HasIndex(client => client.CreatedAt);
+            entity.HasIndex(item => new { item.Scope, item.ParticipantLogin, item.Code });
             entity.ToTable(table => table.HasCheckConstraint(
-                "CK_Clients_Status",
-                "\"Status\" IN ('ACTIVE', 'INACTIVE', 'SUSPENDED')"));
+                "CK_Assignments_Scope",
+                "(\"Scope\" = 'SHARED' AND \"ParticipantLogin\" IS NULL) OR (\"Scope\" = 'INDIVIDUAL' AND \"ParticipantLogin\" IN ('juul', 'amber'))"));
         });
 
-        modelBuilder.Entity<ClientUser>(entity =>
+        modelBuilder.Entity<Notice>(entity =>
         {
-            entity.HasKey(link => new { link.ClientId, link.UserId });
-            entity.HasIndex(link => link.UserId);
-            entity.HasOne<Client>()
-                .WithMany()
-                .HasForeignKey(link => link.ClientId)
-                .OnDelete(DeleteBehavior.Restrict);
-            entity.HasOne<User>()
-                .WithMany()
-                .HasForeignKey(link => link.UserId)
-                .OnDelete(DeleteBehavior.Restrict);
+            entity.Property(notice => notice.Kind).HasMaxLength(16).IsRequired();
+            entity.Property(notice => notice.ParticipantLogin).HasMaxLength(LoginMax);
+            entity.Property(notice => notice.Body).HasMaxLength(4000).IsRequired();
+            entity.ToTable(table => table.HasCheckConstraint(
+                "CK_Notices_Audience",
+                "\"Kind\" IN ('HINT', 'MESSAGE') AND (\"ParticipantLogin\" IS NULL OR \"ParticipantLogin\" IN ('juul', 'amber'))"));
         });
-    }
 
-    private static ClientStatus ParseStatus(string name)
-    {
-        if (!ClientStatuses.TryParse(name, out var status))
+        modelBuilder.Entity<PhoneCall>(entity =>
         {
-            throw new InvalidOperationException($"Unknown client status '{name}'.");
-        }
+            entity.Property(call => call.ParticipantLogin).HasMaxLength(LoginMax).IsRequired();
+            entity.Property(call => call.Summary).HasMaxLength(500).IsRequired();
+            entity.ToTable(table => table.HasCheckConstraint(
+                "CK_PhoneCalls_Participant",
+                "\"ParticipantLogin\" IN ('juul', 'amber')"));
+        });
 
-        return status;
+        modelBuilder.Entity<Activity>(entity =>
+        {
+            entity.Property(activity => activity.Kind).HasMaxLength(80).IsRequired();
+            entity.Property(activity => activity.ParticipantLogin).HasMaxLength(LoginMax);
+            entity.Property(activity => activity.Summary).HasMaxLength(240).IsRequired();
+            entity.Property(activity => activity.Scope)
+                .HasConversion(scope => ProgressScopes.ToName(scope), name => ProgressScopes.Parse(name))
+                .HasMaxLength(16)
+                .IsRequired();
+            entity.HasIndex(activity => activity.OccurredAt);
+        });
+
+        modelBuilder.Entity<Submission>(entity =>
+        {
+            entity.Property(submission => submission.ParticipantLogin).HasMaxLength(LoginMax).IsRequired();
+            entity.Property(submission => submission.Answer).HasMaxLength(2000).IsRequired();
+            entity.Property(submission => submission.Outcome).HasMaxLength(16).IsRequired();
+            entity.HasIndex(submission => submission.Outcome);
+            entity.ToTable(table => table.HasCheckConstraint(
+                "CK_Submissions_Outcome",
+                "\"Outcome\" IN ('PENDING', 'ACCEPTED', 'REFUSED') AND \"ParticipantLogin\" IN ('juul', 'amber')"));
+        });
     }
 
     private const int LoginMax = 80;

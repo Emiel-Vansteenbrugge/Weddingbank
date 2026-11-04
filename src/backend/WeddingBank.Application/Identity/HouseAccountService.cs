@@ -1,4 +1,4 @@
-using WeddingBank.Application.Clients;
+using WeddingBank.Application;
 using WeddingBank.Domain.Identity;
 
 namespace WeddingBank.Application.Identity;

@@ -14,20 +14,21 @@ export type PublicPage =
 export type ClientPageId =
   | 'dashboard'
   | 'accounts'
-  | 'transactions'
+  | 'cases'
+  | 'tasks'
   | 'documents'
   | 'correspondence'
+  | 'archive'
   | 'profile'
   | 'not-found'
 
 export type AdminPageId =
   | 'overview'
   | 'participants'
-  | 'client-new'
-  | 'client-detail'
+  | 'participant'
   | 'cases'
   | 'tasks'
-  | 'communications'
+  | 'hints'
   | 'phone-requests'
   | 'events'
   | 'audit-log'
@@ -38,14 +39,16 @@ export type AppRoute =
   | { area: 'public'; page: PublicPage; slug?: string }
   | { area: 'login' }
   | { area: 'client'; page: ClientPageId }
-  | { area: 'admin'; page: AdminPageId; clientId?: string }
+  | { area: 'admin'; page: AdminPageId; participant?: string }
 
 const clientPages: Record<string, ClientPageId> = {
   '/client': 'dashboard',
   '/client/accounts': 'accounts',
-  '/client/transactions': 'transactions',
+  '/client/cases': 'cases',
+  '/client/tasks': 'tasks',
   '/client/documents': 'documents',
   '/client/correspondence': 'correspondence',
+  '/client/archive': 'archive',
   '/client/profile': 'profile',
 }
 
@@ -54,7 +57,7 @@ const adminPages: Record<string, AdminPageId> = {
   '/admin/participants': 'participants',
   '/admin/cases': 'cases',
   '/admin/tasks': 'tasks',
-  '/admin/communications': 'communications',
+  '/admin/hints': 'hints',
   '/admin/phone-requests': 'phone-requests',
   '/admin/events': 'events',
   '/admin/audit-log': 'audit-log',
@@ -67,13 +70,8 @@ export function matchRoute(path: string): AppRoute {
     return { area: 'client', page: clientPages[path] ?? 'not-found' }
   }
   if (path === '/admin' || path.startsWith('/admin/')) {
-    if (path === '/admin/participants/new') return { area: 'admin', page: 'client-new' }
-    if (path.startsWith('/admin/participants/')) {
-      const id = path.slice('/admin/participants/'.length)
-      if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)) {
-        return { area: 'admin', page: 'client-detail', clientId: id }
-      }
-      return { area: 'admin', page: 'not-found' }
+    if (path === '/admin/participants/juul' || path === '/admin/participants/amber') {
+      return { area: 'admin', page: 'participant', participant: path.slice('/admin/participants/'.length) }
     }
     return { area: 'admin', page: adminPages[path] ?? 'not-found' }
   }

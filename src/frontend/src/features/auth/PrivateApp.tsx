@@ -76,7 +76,7 @@ export function PrivateApp({ path, route }: { path: string; route: PrivateRoute 
 
   return (
     <AdminLayout path={path} displayName={user.displayName} onLogout={logout}>
-      <AdminPages page={route.page} clientId={route.clientId} />
+      <AdminPages page={route.page} participant={route.participant} />
     </AdminLayout>
   )
 }

@@ -6,10 +6,11 @@ import { isCurrentPage } from '../../app/routes.ts'
 const links = [
   { href: '/client', label: 'Dashboard' },
   { href: '/client/accounts', label: 'Accounts' },
-  { href: '/client/transactions', label: 'Transactions' },
+  { href: '/client/cases', label: 'Cases' },
+  { href: '/client/tasks', label: 'Tasks' },
   { href: '/client/documents', label: 'Documents' },
   { href: '/client/correspondence', label: 'Correspondence' },
-  { href: '/client/profile', label: 'Profile' },
+  { href: '/client/archive', label: 'Archive' },
 ] as const
 
 type ClientLayoutProps = {

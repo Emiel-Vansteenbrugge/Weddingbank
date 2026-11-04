@@ -12,14 +12,15 @@ test('the client layout names the record and keeps the desk out', () => {
       <ClientPages page="dashboard" displayName="Juul" login="juul" />
     </ClientLayout>,
   )
-  expect(html).toContain('Welcome, Juul.')
-  expect(html).toContain('Opening the relationship')
+  expect(html).toContain('Opening your record')
   expect(html).toContain('href="/client/accounts"')
-  expect(html).toContain('Transactions')
+  expect(html).toContain('href="/client/cases"')
+  expect(html).toContain('href="/client/tasks"')
+  expect(html).toContain('href="/client/archive"')
   expect(html).toContain('Documents')
   expect(html).toContain('Correspondence')
-  expect(html).toContain('Profile')
   expect(html).toContain('Sign out')
+  expect(html).not.toContain('Transactions')
   expect(html).not.toContain('Participants')
 })
 
@@ -29,18 +30,17 @@ test('the administrator layout names the desk', () => {
       <AdminPages page="overview" />
     </AdminLayout>,
   )
-  expect(html).toContain('Active participants')
-  expect(html).toContain('Overall progress')
-  expect(html).toContain('Open tasks')
-  expect(html).toContain('Recent events')
+  expect(html).toContain('Reading the game')
   expect(html).toContain('href="/admin/participants"')
+  expect(html).toContain('Participants')
   expect(html).toContain('href="/admin/cases"')
   expect(html).toContain('href="/admin/tasks"')
-  expect(html).toContain('href="/admin/communications"')
+  expect(html).toContain('href="/admin/hints"')
   expect(html).toContain('href="/admin/phone-requests"')
   expect(html).toContain('href="/admin/events"')
   expect(html).toContain('href="/admin/audit-log"')
   expect(html).toContain('href="/admin/settings"')
+  expect(html).not.toContain('New client')
 
   const settings = renderToStaticMarkup(
     <AdminLayout path="/admin/settings" displayName="Administrator" onLogout={async () => {}}>

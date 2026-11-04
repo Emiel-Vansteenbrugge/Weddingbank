@@ -22,59 +22,60 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("WeddingBank.Domain.Clients.Client", b =>
+            modelBuilder.Entity("WeddingBank.Domain.Game.Activity", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<string>("AddressLine1")
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
-
-                    b.Property<string>("AddressLine2")
-                        .HasMaxLength(120)
-                        .HasColumnType("character varying(120)");
-
-                    b.Property<string>("City")
-                        .HasMaxLength(80)
-                        .HasColumnType("character varying(80)");
-
-                    b.Property<string>("ClientReference")
+                    b.Property<string>("Kind")
                         .IsRequired()
-                        .HasMaxLength(12)
-                        .HasColumnType("character varying(12)");
-
-                    b.Property<string>("Country")
                         .HasMaxLength(80)
                         .HasColumnType("character varying(80)");
 
-                    b.Property<DateTimeOffset>("CreatedAt")
+                    b.Property<DateTimeOffset>("OccurredAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<string>("DisplayName")
-                        .HasMaxLength(160)
-                        .HasColumnType("character varying(160)");
+                    b.Property<string>("ParticipantLogin")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
 
-                    b.Property<string>("EmailAddress")
+                    b.Property<string>("Scope")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
-
-                    b.Property<string>("LegalName")
-                        .IsRequired()
-                        .HasMaxLength(160)
-                        .HasColumnType("character varying(160)");
-
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(40)
-                        .HasColumnType("character varying(40)");
-
-                    b.Property<string>("PostalCode")
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
 
-                    b.Property<string>("Status")
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasMaxLength(240)
+                        .HasColumnType("character varying(240)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OccurredAt");
+
+                    b.ToTable("Activities");
+                });
+
+            modelBuilder.Entity("WeddingBank.Domain.Game.Assignment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<bool>("Completed")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("ParticipantLogin")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("Scope")
                         .IsRequired()
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
@@ -84,33 +85,116 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ClientReference")
-                        .IsUnique();
+                    b.HasIndex("Scope", "ParticipantLogin", "Code");
 
-                    b.HasIndex("CreatedAt");
-
-                    b.ToTable("Clients", t =>
+                    b.ToTable("Assignments", t =>
                         {
-                            t.HasCheckConstraint("CK_Clients_Status", "\"Status\" IN ('ACTIVE', 'INACTIVE', 'SUSPENDED')");
+                            t.HasCheckConstraint("CK_Assignments_Scope", "(\"Scope\" = 'SHARED' AND \"ParticipantLogin\" IS NULL) OR (\"Scope\" = 'INDIVIDUAL' AND \"ParticipantLogin\" IN ('juul', 'amber'))");
                         });
                 });
 
-            modelBuilder.Entity("WeddingBank.Domain.Clients.ClientUser", b =>
+            modelBuilder.Entity("WeddingBank.Domain.Game.Notice", b =>
                 {
-                    b.Property<Guid>("ClientId")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
 
-                    b.Property<DateTimeOffset>("LinkedAt")
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("ParticipantLogin")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<DateTimeOffset?>("ReadAt")
                         .HasColumnType("timestamp with time zone");
 
-                    b.HasKey("ClientId", "UserId");
+                    b.Property<DateTimeOffset>("SentAt")
+                        .HasColumnType("timestamp with time zone");
 
-                    b.HasIndex("UserId");
+                    b.HasKey("Id");
 
-                    b.ToTable("ClientUsers");
+                    b.ToTable("Notices", t =>
+                        {
+                            t.HasCheckConstraint("CK_Notices_Audience", "\"Kind\" IN ('HINT', 'MESSAGE') AND (\"ParticipantLogin\" IS NULL OR \"ParticipantLogin\" IN ('juul', 'amber'))");
+                        });
+                });
+
+            modelBuilder.Entity("WeddingBank.Domain.Game.PhoneCall", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<bool>("Handled")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset?>("HandledAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("ParticipantLogin")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<DateTimeOffset>("RequestedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("PhoneCalls", t =>
+                        {
+                            t.HasCheckConstraint("CK_PhoneCalls_Participant", "\"ParticipantLogin\" IN ('juul', 'amber')");
+                        });
+                });
+
+            modelBuilder.Entity("WeddingBank.Domain.Game.Submission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Answer")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("AssignmentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Outcome")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("ParticipantLogin")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<DateTimeOffset>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Outcome");
+
+                    b.ToTable("Submissions", t =>
+                        {
+                            t.HasCheckConstraint("CK_Submissions_Outcome", "\"Outcome\" IN ('PENDING', 'ACCEPTED', 'REFUSED') AND \"ParticipantLogin\" IN ('juul', 'amber')");
+                        });
                 });
 
             modelBuilder.Entity("WeddingBank.Domain.Identity.AuditEvent", b =>
@@ -287,21 +371,6 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
                     b.HasIndex("RoleId");
 
                     b.ToTable("UserRoles");
-                });
-
-            modelBuilder.Entity("WeddingBank.Domain.Clients.ClientUser", b =>
-                {
-                    b.HasOne("WeddingBank.Domain.Clients.Client", null)
-                        .WithMany()
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("WeddingBank.Domain.Identity.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
                 });
 
             modelBuilder.Entity("WeddingBank.Domain.Identity.AuditEvent", b =>

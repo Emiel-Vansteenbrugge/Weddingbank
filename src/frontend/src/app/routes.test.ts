@@ -26,4 +26,27 @@ test('unknown addresses are refused in the house they belong to', () => {
   expect(matchRoute('/admin/hints')).toEqual({ area: 'admin', page: 'hints' })
   expect(matchRoute('/admin/participants/juul')).toEqual({ area: 'admin', page: 'participant', participant: 'juul' })
   expect(matchRoute('/admin/participants/new')).toEqual({ area: 'admin', page: 'not-found' })
+  expect(matchRoute('/admin/cases')).toEqual({ area: 'admin', page: 'cases' })
+  expect(matchRoute('/admin/cases/new')).toEqual({ area: 'admin', page: 'case', caseId: 'new' })
+  expect(matchRoute('/admin/cases/11111111-1111-1111-1111-111111111111')).toEqual({
+    area: 'admin',
+    page: 'case',
+    caseId: '11111111-1111-1111-1111-111111111111',
+  })
+  expect(matchRoute('/admin/cases/11111111-1111-1111-1111-111111111111/documents/new')).toEqual({
+    area: 'admin',
+    page: 'case-document',
+    caseId: '11111111-1111-1111-1111-111111111111',
+    documentId: 'new',
+  })
+  expect(matchRoute('/client/cases/11111111-1111-1111-1111-111111111111')).toEqual({
+    area: 'client',
+    page: 'case',
+    caseId: '11111111-1111-1111-1111-111111111111',
+  })
+  expect(matchRoute('/client/documents/22222222-2222-2222-2222-222222222222')).toEqual({
+    area: 'client',
+    page: 'document',
+    documentId: '22222222-2222-2222-2222-222222222222',
+  })
 })

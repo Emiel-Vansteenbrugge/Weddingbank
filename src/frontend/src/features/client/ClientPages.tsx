@@ -3,14 +3,13 @@ import { bank } from '../public/content.ts'
 import type { ClientPageId } from '../../app/routes.ts'
 import { SiteLink } from '../../shared/SiteLink.tsx'
 import { fetchDesk, type ParticipantDesk } from '../game/game-api.ts'
+import { ParticipantCase, ParticipantCases, ParticipantDocument, ParticipantDocuments } from './CaseRoom.tsx'
 
 const rooms: Record<
-  Exclude<ClientPageId, 'dashboard' | 'accounts' | 'profile' | 'not-found'>,
+  Exclude<ClientPageId, 'dashboard' | 'accounts' | 'profile' | 'not-found' | 'cases' | 'case' | 'documents' | 'document'>,
   { title: string; empty: string }
 > = {
-  cases: { title: 'Cases', empty: 'No dossier is open in your name.' },
   tasks: { title: 'Tasks', empty: 'Nothing is waiting for you.' },
-  documents: { title: 'Documents', empty: 'No papers are held for you.' },
   correspondence: { title: 'Correspondence', empty: 'The house has not written.' },
   archive: { title: 'Archive', empty: 'The archive has not been opened.' },
 }
@@ -19,19 +18,25 @@ type ClientPagesProps = {
   page: ClientPageId
   displayName: string
   login: string
+  caseId?: string
+  documentId?: string
 }
 
-export function ClientPages({ page, displayName, login }: ClientPagesProps) {
+export function ClientPages({ page, displayName, login, caseId, documentId }: ClientPagesProps) {
   const title =
     page === 'dashboard'
       ? 'Dashboard'
       : page === 'accounts'
         ? 'Accounts'
-        : page === 'profile'
-          ? 'Profile'
-          : page === 'not-found'
-            ? 'Page not found'
-            : rooms[page].title
+        : page === 'cases' || page === 'case'
+          ? 'Cases'
+          : page === 'documents' || page === 'document'
+            ? 'Documents'
+            : page === 'profile'
+              ? 'Profile'
+              : page === 'not-found'
+                ? 'Page not found'
+                : rooms[page].title
 
   useEffect(() => {
     document.title = `${title} — ${bank.name}`
@@ -65,6 +70,11 @@ export function ClientPages({ page, displayName, login }: ClientPagesProps) {
   if (page === 'dashboard' || page === 'accounts') {
     return <LiveDesk page={page} />
   }
+
+  if (page === 'cases') return <ParticipantCases />
+  if (page === 'case') return <ParticipantCase caseId={caseId ?? ''} />
+  if (page === 'documents') return <ParticipantDocuments />
+  if (page === 'document') return <ParticipantDocument documentId={documentId ?? ''} />
 
   const room = rooms[page]
   return (

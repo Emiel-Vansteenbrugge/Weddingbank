@@ -815,6 +815,22 @@ a { color: inherit; }
 
 .record dd { margin: 0.2rem 0 0; }
 
+.paper {
+  max-width: 40rem;
+  margin-top: 1.6rem;
+  white-space: pre-wrap;
+  line-height: 1.7;
+}
+
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem 1.2rem;
+  margin-top: 1.4rem;
+}
+
+.audit-table .quiet-button + .quiet-button { margin-left: 0.9rem; }
+
 .desk {
   min-height: 100vh;
   display: grid;

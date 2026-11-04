@@ -5,15 +5,12 @@ import { SiteLink } from '../../shared/SiteLink.tsx'
 import { fetchAudit, type AuditRow } from '../auth/api.ts'
 import { fetchOverview, fetchParticipant, type GameOverview, type ParticipantDesk } from '../game/game-api.ts'
 import { HousePasswords } from './HousePasswords.tsx'
+import { CaseEditor, CaseList, DocumentEditor } from './CaseDesk.tsx'
 
 const rooms: Record<
-  Exclude<AdminPageId, 'overview' | 'participants' | 'participant' | 'audit-log' | 'settings' | 'not-found'>,
+  Exclude<AdminPageId, 'overview' | 'participants' | 'participant' | 'audit-log' | 'settings' | 'not-found' | 'cases' | 'case' | 'case-document'>,
   { title: string; empty: string }
 > = {
-  cases: {
-    title: 'Cases',
-    empty: 'No cases have been written. Dossiers can be added when the game is prepared.',
-  },
   tasks: {
     title: 'Tasks',
     empty: 'No tasks have been written. Individual and shared tasks can be added when the game is prepared.',
@@ -48,21 +45,27 @@ const eventLabels: Record<string, string> = {
 type AdminPagesProps = {
   page: AdminPageId
   participant?: string
+  caseId?: string
+  documentId?: string
 }
 
-export function AdminPages({ page, participant }: AdminPagesProps) {
+export function AdminPages({ page, participant, caseId, documentId }: AdminPagesProps) {
   const title =
     page === 'overview'
       ? 'Dashboard'
       : page === 'participants' || page === 'participant'
         ? 'Participants'
-        : page === 'audit-log'
-          ? 'Audit log'
-          : page === 'settings'
-            ? 'Settings'
-            : page === 'not-found'
-              ? 'Page not found'
-              : rooms[page].title
+        : page === 'cases' || page === 'case'
+          ? 'Cases'
+          : page === 'case-document'
+            ? 'Document'
+            : page === 'audit-log'
+              ? 'Audit log'
+              : page === 'settings'
+                ? 'Settings'
+                : page === 'not-found'
+                  ? 'Page not found'
+                  : rooms[page].title
 
   useEffect(() => {
     document.title = `${title} — ${bank.name}`
@@ -77,6 +80,9 @@ export function AdminPages({ page, participant }: AdminPagesProps) {
     )
   }
 
+  if (page === 'cases') return <CaseList />
+  if (page === 'case') return <CaseEditor caseId={caseId ?? 'new'} />
+  if (page === 'case-document') return <DocumentEditor caseId={caseId ?? ''} documentId={documentId ?? 'new'} />
   if (page === 'settings') return <GameSettings />
   if (page === 'participants') return <ParticipantList />
   if (page === 'participant') return <ParticipantDetail login={participant ?? ''} />

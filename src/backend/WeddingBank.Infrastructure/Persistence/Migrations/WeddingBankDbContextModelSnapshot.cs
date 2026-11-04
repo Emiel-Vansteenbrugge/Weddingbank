@@ -93,6 +93,130 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("WeddingBank.Domain.Game.CaseDocument", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Audience")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<Guid>("CaseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasMaxLength(20000)
+                        .HasColumnType("character varying(20000)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CaseId", "DisplayOrder");
+
+                    b.HasIndex("CaseId", "Reference")
+                        .IsUnique();
+
+                    b.ToTable("Documents", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Documents_Audience", "\"Audience\" IN ('JUUL', 'AMBER', 'BOTH')");
+
+                            t.HasCheckConstraint("CK_Documents_Status", "\"Status\" IN ('DRAFT', 'PUBLISHED')");
+                        });
+                });
+
+            modelBuilder.Entity("WeddingBank.Domain.Game.CaseFile", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Audience")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Introduction")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Summary")
+                        .IsRequired()
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DisplayOrder");
+
+                    b.HasIndex("Reference")
+                        .IsUnique();
+
+                    b.ToTable("Cases", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Cases_Audience", "\"Audience\" IN ('JUUL', 'AMBER', 'BOTH')");
+
+                            t.HasCheckConstraint("CK_Cases_Status", "\"Status\" IN ('DRAFT', 'PUBLISHED', 'ARCHIVED')");
+                        });
+                });
+
             modelBuilder.Entity("WeddingBank.Domain.Game.Notice", b =>
                 {
                     b.Property<Guid>("Id")
@@ -373,6 +497,15 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
                     b.ToTable("UserRoles");
                 });
 
+            modelBuilder.Entity("WeddingBank.Domain.Game.CaseDocument", b =>
+                {
+                    b.HasOne("WeddingBank.Domain.Game.CaseFile", null)
+                        .WithMany("Documents")
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("WeddingBank.Domain.Identity.AuditEvent", b =>
                 {
                     b.HasOne("WeddingBank.Domain.Identity.User", null)
@@ -405,6 +538,11 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Role");
+                });
+
+            modelBuilder.Entity("WeddingBank.Domain.Game.CaseFile", b =>
+                {
+                    b.Navigation("Documents");
                 });
 
             modelBuilder.Entity("WeddingBank.Domain.Identity.User", b =>

@@ -15,8 +15,10 @@ export type ClientPageId =
   | 'dashboard'
   | 'accounts'
   | 'cases'
+  | 'case'
   | 'tasks'
   | 'documents'
+  | 'document'
   | 'correspondence'
   | 'archive'
   | 'profile'
@@ -27,6 +29,8 @@ export type AdminPageId =
   | 'participants'
   | 'participant'
   | 'cases'
+  | 'case'
+  | 'case-document'
   | 'tasks'
   | 'hints'
   | 'phone-requests'
@@ -38,8 +42,8 @@ export type AdminPageId =
 export type AppRoute =
   | { area: 'public'; page: PublicPage; slug?: string }
   | { area: 'login' }
-  | { area: 'client'; page: ClientPageId }
-  | { area: 'admin'; page: AdminPageId; participant?: string }
+  | { area: 'client'; page: ClientPageId; caseId?: string; documentId?: string }
+  | { area: 'admin'; page: AdminPageId; participant?: string; caseId?: string; documentId?: string }
 
 const clientPages: Record<string, ClientPageId> = {
   '/client': 'dashboard',
@@ -67,12 +71,23 @@ const adminPages: Record<string, AdminPageId> = {
 export function matchRoute(path: string): AppRoute {
   if (path === '/login') return { area: 'login' }
   if (path === '/client' || path.startsWith('/client/')) {
+    const clientCase = /^\/client\/cases\/([0-9a-f-]{36})$/i.exec(path)
+    if (clientCase) return { area: 'client', page: 'case', caseId: clientCase[1] }
+    const clientDocument = /^\/client\/documents\/([0-9a-f-]{36})$/i.exec(path)
+    if (clientDocument) return { area: 'client', page: 'document', documentId: clientDocument[1] }
     return { area: 'client', page: clientPages[path] ?? 'not-found' }
   }
   if (path === '/admin' || path.startsWith('/admin/')) {
     if (path === '/admin/participants/juul' || path === '/admin/participants/amber') {
       return { area: 'admin', page: 'participant', participant: path.slice('/admin/participants/'.length) }
     }
+    if (path === '/admin/cases/new') return { area: 'admin', page: 'case', caseId: 'new' }
+    const adminDocument = /^\/admin\/cases\/([0-9a-f-]{36})\/documents\/(new|[0-9a-f-]{36})$/i.exec(path)
+    if (adminDocument) {
+      return { area: 'admin', page: 'case-document', caseId: adminDocument[1], documentId: adminDocument[2] }
+    }
+    const adminCase = /^\/admin\/cases\/([0-9a-f-]{36})$/i.exec(path)
+    if (adminCase) return { area: 'admin', page: 'case', caseId: adminCase[1] }
     return { area: 'admin', page: adminPages[path] ?? 'not-found' }
   }
   if (path === '/') return { area: 'public', page: 'home' }

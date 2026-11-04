@@ -69,14 +69,20 @@ export function PrivateApp({ path, route }: { path: string; route: PrivateRoute 
   if (route.area === 'client') {
     return (
       <ClientLayout path={path} displayName={user.displayName} onLogout={logout}>
-        <ClientPages page={route.page} displayName={user.displayName} login={user.login} />
+        <ClientPages
+          page={route.page}
+          displayName={user.displayName}
+          login={user.login}
+          caseId={route.caseId}
+          documentId={route.documentId}
+        />
       </ClientLayout>
     )
   }
 
   return (
     <AdminLayout path={path} displayName={user.displayName} onLogout={logout}>
-      <AdminPages page={route.page} participant={route.participant} />
+      <AdminPages page={route.page} participant={route.participant} caseId={route.caseId} documentId={route.documentId} />
     </AdminLayout>
   )
 }

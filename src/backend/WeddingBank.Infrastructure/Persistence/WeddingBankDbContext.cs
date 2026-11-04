@@ -26,6 +26,10 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
 
     public DbSet<Submission> Submissions => Set<Submission>();
 
+    public DbSet<CaseFile> CaseFiles => Set<CaseFile>();
+
+    public DbSet<CaseDocument> CaseDocuments => Set<CaseDocument>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Role>(entity =>
@@ -140,6 +144,50 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
             entity.ToTable(table => table.HasCheckConstraint(
                 "CK_Submissions_Outcome",
                 "\"Outcome\" IN ('PENDING', 'ACCEPTED', 'REFUSED') AND \"ParticipantLogin\" IN ('juul', 'amber')"));
+        });
+
+        modelBuilder.Entity<CaseFile>(entity =>
+        {
+            entity.ToTable("Cases", table =>
+            {
+                table.HasCheckConstraint("CK_Cases_Status", "\"Status\" IN ('DRAFT', 'PUBLISHED', 'ARCHIVED')");
+                table.HasCheckConstraint("CK_Cases_Audience", "\"Audience\" IN ('JUUL', 'AMBER', 'BOTH')");
+            });
+            entity.Property(file => file.Id).ValueGeneratedNever();
+            entity.Property(file => file.Reference).HasMaxLength(40).IsRequired();
+            entity.Property(file => file.Title).HasMaxLength(160).IsRequired();
+            entity.Property(file => file.Summary).HasMaxLength(600).IsRequired();
+            entity.Property(file => file.Introduction).HasMaxLength(4000);
+            entity.Property(file => file.Status).HasMaxLength(16).IsRequired();
+            entity.Property(file => file.Audience).HasMaxLength(8).IsRequired();
+            entity.HasIndex(file => file.Reference).IsUnique();
+            entity.HasIndex(file => file.DisplayOrder);
+            entity.HasMany(file => file.Documents)
+                .WithOne()
+                .HasForeignKey(document => document.CaseId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.Navigation(file => file.Documents)
+                .HasField("_documents")
+                .UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        modelBuilder.Entity<CaseDocument>(entity =>
+        {
+            entity.ToTable("Documents", table =>
+            {
+                table.HasCheckConstraint("CK_Documents_Status", "\"Status\" IN ('DRAFT', 'PUBLISHED')");
+                table.HasCheckConstraint("CK_Documents_Audience", "\"Audience\" IN ('JUUL', 'AMBER', 'BOTH')");
+            });
+            entity.Property(document => document.Id).ValueGeneratedNever();
+            entity.Property(document => document.Reference).HasMaxLength(40).IsRequired();
+            entity.Property(document => document.Title).HasMaxLength(160).IsRequired();
+            entity.Property(document => document.Category).HasMaxLength(40).IsRequired();
+            entity.Property(document => document.Description).HasMaxLength(600);
+            entity.Property(document => document.Content).HasMaxLength(20000).IsRequired();
+            entity.Property(document => document.Status).HasMaxLength(16).IsRequired();
+            entity.Property(document => document.Audience).HasMaxLength(8).IsRequired();
+            entity.HasIndex(document => new { document.CaseId, document.Reference }).IsUnique();
+            entity.HasIndex(document => new { document.CaseId, document.DisplayOrder });
         });
     }
 

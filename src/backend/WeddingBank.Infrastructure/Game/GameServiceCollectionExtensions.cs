@@ -9,6 +9,8 @@ public static class GameServiceCollectionExtensions
     {
         services.AddScoped<IGameStore, EfGameStore>();
         services.AddScoped<GameService>();
+        services.AddScoped<ICaseStore, EfCaseStore>();
+        services.AddScoped<CaseService>();
         return services;
     }
 }

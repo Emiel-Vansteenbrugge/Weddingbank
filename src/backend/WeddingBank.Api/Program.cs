@@ -116,6 +116,7 @@ app.MapHealthChecks("/health").AllowAnonymous();
 app.MapEnquiryEndpoints();
 app.MapAuthEndpoints();
 app.MapGameEndpoints();
+app.MapCaseEndpoints();
 
 app.Run();
 

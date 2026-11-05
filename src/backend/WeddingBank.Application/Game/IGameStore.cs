@@ -1,5 +1,7 @@
 namespace WeddingBank.Application.Game;
 
+public sealed record VisibleProgress(int Completed, int Open, int SharedCompleted, int SharedOpen);
+
 public sealed record ProgressCounts(
     int JuulCompleted,
     int JuulOpen,
@@ -18,4 +20,6 @@ public sealed record ProgressCounts(
 public interface IGameStore
 {
     Task<ProgressCounts> ReadCountsAsync(CancellationToken cancellationToken);
+
+    Task<VisibleProgress> ReadVisibleProgressAsync(string login, CancellationToken cancellationToken);
 }

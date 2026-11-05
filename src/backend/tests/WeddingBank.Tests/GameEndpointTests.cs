@@ -124,6 +124,11 @@ public sealed class GameApiFixture : IDisposable
         {
             return Task.FromResult(new ProgressCounts(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, null, null));
         }
+
+        public Task<VisibleProgress> ReadVisibleProgressAsync(string login, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new VisibleProgress(0, 0, 0, 0));
+        }
     }
 
     private sealed class InMemoryIdentityStore : IIdentityStore

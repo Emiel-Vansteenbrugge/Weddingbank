@@ -42,4 +42,35 @@ public sealed class EfGameStore(WeddingBankDbContext db) : IGameStore
             .ToListAsync(cancellationToken);
         return stamps.Count == 0 ? null : stamps.Max();
     }
+
+    public async Task<VisibleProgress> ReadVisibleProgressAsync(string login, CancellationToken cancellationToken)
+    {
+        var rows = await db.Assignments.AsNoTracking()
+            .Where(assignment => assignment.TaskId != null)
+            .Join(
+                db.QuestTasks.AsNoTracking(),
+                assignment => assignment.TaskId,
+                task => task.Id,
+                (assignment, task) => new { assignment, task })
+            .Join(
+                db.Quests.AsNoTracking(),
+                row => row.task.QuestId,
+                quest => quest.Id,
+                (row, quest) => new { row.assignment, row.task, quest })
+            .Join(
+                db.CaseFiles.AsNoTracking(),
+                row => row.quest.CaseId,
+                file => file.Id,
+                (row, file) => new { row.assignment, row.task, row.quest, file })
+            .ToListAsync(cancellationToken);
+        var visible = rows
+            .Where(row => row.quest.IsOpenTo(login) && row.file.IsOpenTo(login) && row.task.IsVisibleTo(login, row.assignment))
+            .Select(row => row.assignment)
+            .ToArray();
+        return new VisibleProgress(
+            visible.Count(item => item.Scope == ProgressScope.Individual && item.ParticipantLogin == login && item.Completed),
+            visible.Count(item => item.Scope == ProgressScope.Individual && item.ParticipantLogin == login && !item.Completed),
+            visible.Count(item => item.Scope == ProgressScope.Shared && item.Completed),
+            visible.Count(item => item.Scope == ProgressScope.Shared && !item.Completed));
+    }
 }

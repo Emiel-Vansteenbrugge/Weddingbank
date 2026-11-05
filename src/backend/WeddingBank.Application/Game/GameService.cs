@@ -62,21 +62,20 @@ public sealed class GameService(IIdentityStore identities, IGameStore games)
         login = normalized;
 
         var counts = await games.ReadCountsAsync(cancellationToken);
+        var visible = await games.ReadVisibleProgressAsync(login, cancellationToken);
         var user = await identities.FindUserByLoginAsync(login, cancellationToken);
         var name = user?.DisplayName ?? (login == Participants.Juul ? "Juul" : "Amber");
-        var completed = login == Participants.Juul ? counts.JuulCompleted : counts.AmberCompleted;
-        var available = login == Participants.Juul ? counts.JuulOpen : counts.AmberOpen;
         var hints = login == Participants.Juul ? counts.HintsForJuul : counts.HintsForAmber;
         var last = login == Participants.Juul ? counts.JuulLastActivity : counts.AmberLastActivity;
         return new ParticipantDesk(
             login,
             name,
-            Stage(completed, available, last),
+            Stage(visible.Completed, visible.Open, last),
             new AccountView(name, "Private account", "Nothing has been posted."),
-            completed,
-            available,
-            counts.SharedCompleted,
-            counts.SharedOpen,
+            visible.Completed,
+            visible.Open,
+            visible.SharedCompleted,
+            visible.SharedOpen,
             hints + counts.HintsForBoth);
     }
 

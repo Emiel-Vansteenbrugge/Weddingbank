@@ -28,6 +28,9 @@ internal static class AuthEndpoints
         app.MapGet("/api/auth/me", MeAsync).RequireAuthorization();
 
         app.MapGet("/api/admin/audit", AuditAsync).RequireAuthorization("Admin");
+        app.MapPost("/api/admin/participants/{login}/session", OpenParticipantAsync)
+            .RequireAuthorization("Admin")
+            .AddEndpointFilter(HouseRequestGuard.Invoke);
         app.MapGet("/api/admin/house-accounts", ListHouseAccountsAsync).RequireAuthorization("Admin");
         app.MapPost("/api/admin/house-accounts/{login}/password", ChangeHousePasswordAsync)
             .RequireAuthorization("Admin")
@@ -110,6 +113,40 @@ internal static class AuthEndpoints
 
         var entries = await authentication.ReadAuditAsync(id, HouseRequestGuard.ClientIp(http), cancellationToken);
         return Results.Ok(entries);
+    }
+
+    private static async Task<IResult> OpenParticipantAsync(
+        string login,
+        ClaimsPrincipal principal,
+        HttpContext http,
+        HouseSignIn authentication,
+        CancellationToken cancellationToken)
+    {
+        var idValue = principal.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!Guid.TryParse(idValue, out var actorId))
+        {
+            return Results.Problem(statusCode: StatusCodes.Status401Unauthorized, title: "Sign in to continue.");
+        }
+
+        var sessionValue = principal.FindFirstValue(HouseAuthenticationExtensions.SessionClaim);
+        Guid? sessionId = Guid.TryParse(sessionValue, out var parsed) ? parsed : null;
+        var opened = await authentication.OpenParticipantAsync(actorId, sessionId, login, HouseRequestGuard.ClientIp(http), cancellationToken);
+        if (opened is null)
+        {
+            return Results.Problem(statusCode: StatusCodes.Status404NotFound, title: "That participant could not be opened.");
+        }
+
+        await http.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            HouseAuthenticationExtensions.PrincipalFor(opened.User, opened.SessionId),
+            new AuthenticationProperties
+            {
+                IsPersistent = true,
+                IssuedUtc = opened.IssuedAt,
+                ExpiresUtc = opened.ExpiresAt,
+                AllowRefresh = false,
+            });
+        return Results.Ok(opened.User);
     }
 
     private static async Task<IResult> ListHouseAccountsAsync(HouseAccountService accounts, CancellationToken cancellationToken)

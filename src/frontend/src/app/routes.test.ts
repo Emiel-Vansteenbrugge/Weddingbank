@@ -51,4 +51,23 @@ test('unknown addresses are refused in the house they belong to', () => {
     page: 'document',
     documentId: '22222222-2222-2222-2222-222222222222',
   })
+  expect(matchRoute('/client/tasks')).toEqual({ area: 'client', page: 'tasks' })
+  expect(matchRoute('/client/tasks/33333333-3333-3333-3333-333333333333')).toEqual({
+    area: 'client',
+    page: 'quest',
+    questId: '33333333-3333-3333-3333-333333333333',
+  })
+  expect(matchRoute('/admin/tasks')).toEqual({ area: 'admin', page: 'tasks' })
+  expect(matchRoute('/admin/tasks/new')).toEqual({ area: 'admin', page: 'quest', questId: 'new' })
+  expect(matchRoute('/admin/tasks/33333333-3333-3333-3333-333333333333')).toEqual({
+    area: 'admin',
+    page: 'quest',
+    questId: '33333333-3333-3333-3333-333333333333',
+  })
+  expect(matchRoute('/admin/tasks/33333333-3333-3333-3333-333333333333/tasks/new')).toEqual({
+    area: 'admin',
+    page: 'quest-task',
+    questId: '33333333-3333-3333-3333-333333333333',
+    taskId: 'new',
+  })
 })

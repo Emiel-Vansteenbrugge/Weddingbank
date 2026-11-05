@@ -14,11 +14,13 @@ public sealed class Assignment
 
     public string? ParticipantLogin { get; private set; }
 
+    public Guid? TaskId { get; private set; }
+
     public bool Completed { get; private set; }
 
     public DateTimeOffset UpdatedAt { get; private set; }
 
-    public static Assignment ForParticipant(Guid id, string code, string login, DateTimeOffset now)
+    public static Assignment ForParticipant(Guid id, string code, string login, DateTimeOffset now, Guid? taskId = null)
     {
         if (!Participants.IsParticipant(login))
         {
@@ -31,19 +33,27 @@ public sealed class Assignment
             Code = RequiredCode(code),
             Scope = ProgressScope.Individual,
             ParticipantLogin = login,
+            TaskId = taskId,
             UpdatedAt = now,
         };
     }
 
-    public static Assignment ForTheHouse(Guid id, string code, DateTimeOffset now)
+    public static Assignment ForTheHouse(Guid id, string code, DateTimeOffset now, Guid? taskId = null)
     {
         return new Assignment
         {
             Id = id,
             Code = RequiredCode(code),
             Scope = ProgressScope.Shared,
+            TaskId = taskId,
             UpdatedAt = now,
         };
+    }
+
+    public void Rename(string code, DateTimeOffset now)
+    {
+        Code = RequiredCode(code);
+        UpdatedAt = now;
     }
 
     public void Complete(DateTimeOffset now)

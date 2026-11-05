@@ -66,6 +66,47 @@ public sealed class AuthEndpointTests : IClassFixture<AuthApiFixture>
     }
 
     [Fact]
+    public async Task The_administrator_opens_a_participant_desk_without_the_password()
+    {
+        using var admin = _fixture.CreateClient();
+        var signedIn = await LoginAsync(admin, "administrator", AdminPassword);
+        var adminSession = signedIn.Headers.GetValues("Set-Cookie")
+            .First(value => value.StartsWith("wb.session=", StringComparison.Ordinal))
+            .Split(';', 2)[0];
+        Assert.Equal(HttpStatusCode.OK, signedIn.StatusCode);
+
+        var opened = await PostAsync(admin, "/api/admin/participants/juul/session");
+        var body = await opened.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, opened.StatusCode);
+        Assert.Contains("Juul-V", body, StringComparison.Ordinal);
+        Assert.Contains("CLIENT", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("ADMIN", body, StringComparison.Ordinal);
+        Assert.DoesNotContain(ClientPassword, body, StringComparison.Ordinal);
+        Assert.DoesNotContain(AdminPassword, body, StringComparison.Ordinal);
+
+        var me = await admin.GetStringAsync("/api/auth/me");
+        Assert.Contains("Juul-V", me, StringComparison.Ordinal);
+        Assert.Equal(HttpStatusCode.Forbidden, (await admin.GetAsync("/api/admin/quests")).StatusCode);
+
+        using var replay = _fixture.CreateClient();
+        var stale = new HttpRequestMessage(HttpMethod.Get, "/api/auth/me");
+        stale.Headers.TryAddWithoutValidation("Cookie", adminSession);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await replay.SendAsync(stale)).StatusCode);
+
+        using var again = _fixture.CreateClient();
+        Assert.Equal(HttpStatusCode.OK, (await LoginAsync(again, "administrator", AdminPassword)).StatusCode);
+        var audit = await again.GetStringAsync("/api/admin/audit");
+        Assert.Contains("admin.participant_opened", audit, StringComparison.Ordinal);
+        Assert.Contains("Juul-V", audit, StringComparison.Ordinal);
+        Assert.DoesNotContain(ClientPassword, audit, StringComparison.Ordinal);
+
+        using var juul = _fixture.CreateClient();
+        Assert.Equal(HttpStatusCode.OK, (await LoginAsync(juul, "juul", ClientPassword)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await PostAsync(juul, "/api/admin/participants/amber/session")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await PostAsync(again, "/api/admin/participants/administrator/session")).StatusCode);
+    }
+
+    [Fact]
     public async Task Logout_invalidates_the_issued_session()
     {
         using var client = _fixture.CreateClient();

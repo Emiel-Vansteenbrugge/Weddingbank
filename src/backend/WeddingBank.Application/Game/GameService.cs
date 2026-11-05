@@ -32,6 +32,7 @@ public sealed record ParticipantDesk(
     int CompletedTasks,
     int AvailableTasks,
     int SharedCompletedTasks,
+    int SharedOpenTasks,
     int HintsWaiting);
 
 public sealed class GameService(IIdentityStore identities, IGameStore games)
@@ -75,6 +76,7 @@ public sealed class GameService(IIdentityStore identities, IGameStore games)
             completed,
             available,
             counts.SharedCompleted,
+            counts.SharedOpen,
             hints + counts.HintsForBoth);
     }
 

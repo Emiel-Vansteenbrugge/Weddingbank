@@ -117,6 +117,7 @@ app.MapEnquiryEndpoints();
 app.MapAuthEndpoints();
 app.MapGameEndpoints();
 app.MapCaseEndpoints();
+app.MapQuestEndpoints();
 
 app.Run();
 

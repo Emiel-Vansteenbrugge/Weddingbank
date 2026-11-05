@@ -14,6 +14,7 @@ public sealed class AuditEvent
     public const string ClientUserLinked = "client.user_linked";
     public const string ClientUserUnlinked = "client.user_unlinked";
     public const string UserPasswordChanged = "user.password_changed";
+    public const string ParticipantOpened = "admin.participant_opened";
 
     private AuditEvent()
     {

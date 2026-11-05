@@ -1,3 +1,4 @@
+using WeddingBank.Domain.Game;
 using WeddingBank.Domain.Identity;
 
 namespace WeddingBank.Application.Identity;
@@ -51,6 +52,51 @@ public sealed class AuthenticationService(IIdentityStore store, IPasswordHasher 
             null));
         await store.SaveChangesAsync(cancellationToken);
         return new SignedIn(ToUser(user), session.Id, session.CreatedAt, session.AbsoluteExpiresAt);
+    }
+
+    public async Task<SignedIn?> OpenParticipantAsync(Guid actorId, Guid? actorSessionId, string? login, string? ipAddress, CancellationToken cancellationToken)
+    {
+        var normalized = LoginName.Normalize(login);
+        if (normalized is null || !Participants.IsParticipant(normalized))
+        {
+            return null;
+        }
+
+        var actor = await store.FindUserByIdAsync(actorId, cancellationToken);
+        if (actor is null || !actor.RoleNames().Contains(RoleNames.Admin))
+        {
+            return null;
+        }
+
+        var participant = await store.FindUserByLoginAsync(normalized, cancellationToken);
+        if (participant is null || !participant.RoleNames().Contains(RoleNames.Client))
+        {
+            return null;
+        }
+
+        var now = clock.GetUtcNow();
+        if (actorSessionId is Guid sessionId)
+        {
+            var current = await store.FindSessionAsync(sessionId, cancellationToken);
+            if (current is not null && current.UserId == actor.Id && current.RevokedAt is null)
+            {
+                current.Revoke(now);
+            }
+        }
+
+        var session = AuthSession.Issue(Guid.CreateVersion7(), participant.Id, participant.SecurityStamp, now);
+        store.AddSession(session);
+        store.AddAuditEvent(AuditEvent.Record(
+            Guid.CreateVersion7(),
+            now,
+            actor.Id,
+            AuditEvent.ParticipantOpened,
+            "participant",
+            participant.Login,
+            ipAddress,
+            null));
+        await store.SaveChangesAsync(cancellationToken);
+        return new SignedIn(ToUser(participant), session.Id, session.CreatedAt, session.AbsoluteExpiresAt);
     }
 
     public async Task<AuthUser?> ValidateSessionAsync(Guid sessionId, CancellationToken cancellationToken)

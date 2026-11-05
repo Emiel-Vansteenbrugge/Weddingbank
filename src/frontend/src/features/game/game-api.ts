@@ -34,6 +34,7 @@ export type ParticipantDesk = {
   completedTasks: number
   availableTasks: number
   sharedCompletedTasks: number
+  sharedOpenTasks: number
   hintsWaiting: number
 }
 

@@ -30,6 +30,14 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
 
     public DbSet<CaseDocument> CaseDocuments => Set<CaseDocument>();
 
+    public DbSet<Quest> Quests => Set<Quest>();
+
+    public DbSet<QuestTask> QuestTasks => Set<QuestTask>();
+
+    public DbSet<TaskAnswer> TaskAnswers => Set<TaskAnswer>();
+
+    public DbSet<DocumentUnlock> DocumentUnlocks => Set<DocumentUnlock>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Role>(entity =>
@@ -100,6 +108,11 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
                 .HasMaxLength(16)
                 .IsRequired();
             entity.HasIndex(item => new { item.Scope, item.ParticipantLogin, item.Code });
+            entity.HasIndex(item => item.TaskId).IsUnique().HasFilter("\"TaskId\" IS NOT NULL");
+            entity.HasOne<QuestTask>()
+                .WithMany()
+                .HasForeignKey(item => item.TaskId)
+                .OnDelete(DeleteBehavior.Restrict);
             entity.ToTable(table => table.HasCheckConstraint(
                 "CK_Assignments_Scope",
                 $"(\"Scope\" = 'SHARED' AND \"ParticipantLogin\" IS NULL) OR (\"Scope\" = 'INDIVIDUAL' AND \"ParticipantLogin\" IN ('{Participants.Juul}', '{Participants.Amber}'))"));
@@ -142,6 +155,11 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
             entity.Property(submission => submission.Answer).HasMaxLength(2000).IsRequired();
             entity.Property(submission => submission.Outcome).HasMaxLength(16).IsRequired();
             entity.HasIndex(submission => submission.Outcome);
+            entity.HasIndex(submission => submission.AssignmentId);
+            entity.HasOne<Assignment>()
+                .WithMany()
+                .HasForeignKey(submission => submission.AssignmentId)
+                .OnDelete(DeleteBehavior.Restrict);
             entity.ToTable(table => table.HasCheckConstraint(
                 "CK_Submissions_Outcome",
                 $"\"Outcome\" IN ('PENDING', 'ACCEPTED', 'REFUSED') AND \"ParticipantLogin\" IN ('{Participants.Juul}', '{Participants.Amber}')"));
@@ -189,6 +207,96 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
             entity.Property(document => document.Audience).HasMaxLength(8).IsRequired();
             entity.HasIndex(document => new { document.CaseId, document.Reference }).IsUnique();
             entity.HasIndex(document => new { document.CaseId, document.DisplayOrder });
+        });
+
+        modelBuilder.Entity<Quest>(entity =>
+        {
+            entity.ToTable("Quests", table =>
+            {
+                table.HasCheckConstraint("CK_Quests_Status", "\"Status\" IN ('DRAFT', 'PUBLISHED', 'ARCHIVED')");
+                table.HasCheckConstraint("CK_Quests_Audience", "\"Audience\" IN ('JUUL', 'AMBER', 'BOTH')");
+                table.HasCheckConstraint("CK_Quests_Kind", "\"Kind\" IN ('MAIN', 'SIDE')");
+            });
+            entity.Property(quest => quest.Id).ValueGeneratedNever();
+            entity.Property(quest => quest.Reference).HasMaxLength(40).IsRequired();
+            entity.Property(quest => quest.Title).HasMaxLength(160).IsRequired();
+            entity.Property(quest => quest.Description).HasMaxLength(2000).IsRequired();
+            entity.Property(quest => quest.Instructions).HasMaxLength(4000).IsRequired();
+            entity.Property(quest => quest.Status).HasMaxLength(16).IsRequired();
+            entity.Property(quest => quest.Audience).HasMaxLength(8).IsRequired();
+            entity.Property(quest => quest.Kind).HasMaxLength(8).IsRequired();
+            entity.HasIndex(quest => quest.Reference).IsUnique();
+            entity.HasIndex(quest => quest.DisplayOrder);
+            entity.HasOne<CaseFile>()
+                .WithMany()
+                .HasForeignKey(quest => quest.CaseId)
+                .OnDelete(DeleteBehavior.Restrict);
+            entity.HasMany(quest => quest.Tasks)
+                .WithOne()
+                .HasForeignKey(task => task.QuestId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.Navigation(quest => quest.Tasks)
+                .HasField("_tasks")
+                .UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        modelBuilder.Entity<QuestTask>(entity =>
+        {
+            entity.ToTable("Tasks", table =>
+            {
+                table.HasCheckConstraint("CK_Tasks_Status", "\"Status\" IN ('DRAFT', 'PUBLISHED')");
+                table.HasCheckConstraint("CK_Tasks_Type", "\"TaskType\" IN ('TEXT')");
+                table.HasCheckConstraint(
+                    "CK_Tasks_Scope",
+                    $"(\"Scope\" = 'SHARED' AND \"ParticipantLogin\" IS NULL) OR (\"Scope\" = 'INDIVIDUAL' AND \"ParticipantLogin\" IN ('{Participants.Juul}', '{Participants.Amber}'))");
+            });
+            entity.Property(task => task.Id).ValueGeneratedNever();
+            entity.Property(task => task.Reference).HasMaxLength(40).IsRequired();
+            entity.Property(task => task.Title).HasMaxLength(160).IsRequired();
+            entity.Property(task => task.Instructions).HasMaxLength(4000).IsRequired();
+            entity.Property(task => task.TaskType).HasMaxLength(16).IsRequired();
+            entity.Property(task => task.ParticipantLogin).HasMaxLength(LoginMax);
+            entity.Property(task => task.SuccessMessage).HasMaxLength(600);
+            entity.Property(task => task.Status).HasMaxLength(16).IsRequired();
+            entity.Property(task => task.Scope)
+                .HasConversion(scope => ProgressScopes.ToName(scope), name => ProgressScopes.Parse(name))
+                .HasMaxLength(16)
+                .IsRequired();
+            entity.HasIndex(task => task.Reference).IsUnique();
+            entity.HasIndex(task => new { task.QuestId, task.DisplayOrder });
+            entity.HasMany(task => task.Answers)
+                .WithOne()
+                .HasForeignKey(answer => answer.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.Navigation(task => task.Answers)
+                .HasField("_answers")
+                .UsePropertyAccessMode(PropertyAccessMode.Field);
+            entity.HasMany(task => task.Unlocks)
+                .WithOne()
+                .HasForeignKey(unlock => unlock.TaskId)
+                .OnDelete(DeleteBehavior.Cascade);
+            entity.Navigation(task => task.Unlocks)
+                .HasField("_unlocks")
+                .UsePropertyAccessMode(PropertyAccessMode.Field);
+        });
+
+        modelBuilder.Entity<TaskAnswer>(entity =>
+        {
+            entity.ToTable("TaskAnswers");
+            entity.Property(answer => answer.Id).ValueGeneratedNever();
+            entity.Property(answer => answer.Text).HasMaxLength(500).IsRequired();
+            entity.HasIndex(answer => new { answer.TaskId, answer.DisplayOrder });
+        });
+
+        modelBuilder.Entity<DocumentUnlock>(entity =>
+        {
+            entity.ToTable("DocumentUnlocks");
+            entity.Property(unlock => unlock.Id).ValueGeneratedNever();
+            entity.HasIndex(unlock => new { unlock.TaskId, unlock.DocumentId }).IsUnique();
+            entity.HasOne<CaseDocument>()
+                .WithMany()
+                .HasForeignKey(unlock => unlock.DocumentId)
+                .OnDelete(DeleteBehavior.Restrict);
         });
     }
 

@@ -29,6 +29,19 @@ public static class ProgressScopes
         return scope == ProgressScope.Shared ? Shared : Individual;
     }
 
+    public static bool TryParse(string? value, out ProgressScope scope)
+    {
+        var name = value?.Trim().ToUpperInvariant();
+        if (name is Individual or Shared)
+        {
+            scope = Parse(name);
+            return true;
+        }
+
+        scope = default;
+        return false;
+    }
+
     public static ProgressScope Parse(string name)
     {
         return name switch

@@ -80,10 +80,17 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
                         .HasMaxLength(16)
                         .HasColumnType("character varying(16)");
 
+                    b.Property<Guid?>("TaskId")
+                        .HasColumnType("uuid");
+
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TaskId")
+                        .IsUnique()
+                        .HasFilter("\"TaskId\" IS NOT NULL");
 
                     b.HasIndex("Scope", "ParticipantLogin", "Code");
 
@@ -217,6 +224,27 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("WeddingBank.Domain.Game.DocumentUnlock", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentId");
+
+                    b.HasIndex("TaskId", "DocumentId")
+                        .IsUnique();
+
+                    b.ToTable("DocumentUnlocks", (string)null);
+                });
+
             modelBuilder.Entity("WeddingBank.Domain.Game.Notice", b =>
                 {
                     b.Property<Guid>("Id")
@@ -284,6 +312,155 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("WeddingBank.Domain.Game.Quest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Audience")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<Guid>("CaseId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Instructions")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CaseId");
+
+                    b.HasIndex("DisplayOrder");
+
+                    b.HasIndex("Reference")
+                        .IsUnique();
+
+                    b.ToTable("Quests", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Quests_Audience", "\"Audience\" IN ('JUUL', 'AMBER', 'BOTH')");
+
+                            t.HasCheckConstraint("CK_Quests_Kind", "\"Kind\" IN ('MAIN', 'SIDE')");
+
+                            t.HasCheckConstraint("CK_Quests_Status", "\"Status\" IN ('DRAFT', 'PUBLISHED', 'ARCHIVED')");
+                        });
+                });
+
+            modelBuilder.Entity("WeddingBank.Domain.Game.QuestTask", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IgnoreCase")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Instructions")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("ParticipantLogin")
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<Guid>("QuestId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Reference")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<string>("Scope")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("SuccessMessage")
+                        .HasMaxLength(600)
+                        .HasColumnType("character varying(600)");
+
+                    b.Property<string>("TaskType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(160)
+                        .HasColumnType("character varying(160)");
+
+                    b.Property<bool>("TrimWhitespace")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Reference")
+                        .IsUnique();
+
+                    b.HasIndex("QuestId", "DisplayOrder");
+
+                    b.ToTable("Tasks", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Tasks_Scope", "(\"Scope\" = 'SHARED' AND \"ParticipantLogin\" IS NULL) OR (\"Scope\" = 'INDIVIDUAL' AND \"ParticipantLogin\" IN ('Juul-V', 'Amber-D'))");
+
+                            t.HasCheckConstraint("CK_Tasks_Status", "\"Status\" IN ('DRAFT', 'PUBLISHED')");
+
+                            t.HasCheckConstraint("CK_Tasks_Type", "\"TaskType\" IN ('TEXT')");
+                        });
+                });
+
             modelBuilder.Entity("WeddingBank.Domain.Game.Submission", b =>
                 {
                     b.Property<Guid>("Id")
@@ -313,12 +490,37 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("AssignmentId");
+
                     b.HasIndex("Outcome");
 
                     b.ToTable("Submissions", t =>
                         {
                             t.HasCheckConstraint("CK_Submissions_Outcome", "\"Outcome\" IN ('PENDING', 'ACCEPTED', 'REFUSED') AND \"ParticipantLogin\" IN ('Juul-V', 'Amber-D')");
                         });
+                });
+
+            modelBuilder.Entity("WeddingBank.Domain.Game.TaskAnswer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("DisplayOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TaskId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Text")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskId", "DisplayOrder");
+
+                    b.ToTable("TaskAnswers", (string)null);
                 });
 
             modelBuilder.Entity("WeddingBank.Domain.Identity.AuditEvent", b =>
@@ -501,11 +703,70 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
                     b.ToTable("UserRoles");
                 });
 
+            modelBuilder.Entity("WeddingBank.Domain.Game.Assignment", b =>
+                {
+                    b.HasOne("WeddingBank.Domain.Game.QuestTask", null)
+                        .WithMany()
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Restrict);
+                });
+
             modelBuilder.Entity("WeddingBank.Domain.Game.CaseDocument", b =>
                 {
                     b.HasOne("WeddingBank.Domain.Game.CaseFile", null)
                         .WithMany("Documents")
                         .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WeddingBank.Domain.Game.DocumentUnlock", b =>
+                {
+                    b.HasOne("WeddingBank.Domain.Game.CaseDocument", null)
+                        .WithMany()
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("WeddingBank.Domain.Game.QuestTask", null)
+                        .WithMany("Unlocks")
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WeddingBank.Domain.Game.Quest", b =>
+                {
+                    b.HasOne("WeddingBank.Domain.Game.CaseFile", null)
+                        .WithMany()
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WeddingBank.Domain.Game.QuestTask", b =>
+                {
+                    b.HasOne("WeddingBank.Domain.Game.Quest", null)
+                        .WithMany("Tasks")
+                        .HasForeignKey("QuestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WeddingBank.Domain.Game.Submission", b =>
+                {
+                    b.HasOne("WeddingBank.Domain.Game.Assignment", null)
+                        .WithMany()
+                        .HasForeignKey("AssignmentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WeddingBank.Domain.Game.TaskAnswer", b =>
+                {
+                    b.HasOne("WeddingBank.Domain.Game.QuestTask", null)
+                        .WithMany("Answers")
+                        .HasForeignKey("TaskId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });
@@ -547,6 +808,18 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("WeddingBank.Domain.Game.CaseFile", b =>
                 {
                     b.Navigation("Documents");
+                });
+
+            modelBuilder.Entity("WeddingBank.Domain.Game.Quest", b =>
+                {
+                    b.Navigation("Tasks");
+                });
+
+            modelBuilder.Entity("WeddingBank.Domain.Game.QuestTask", b =>
+                {
+                    b.Navigation("Answers");
+
+                    b.Navigation("Unlocks");
                 });
 
             modelBuilder.Entity("WeddingBank.Domain.Identity.User", b =>

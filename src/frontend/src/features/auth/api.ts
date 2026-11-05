@@ -70,6 +70,16 @@ export async function fetchCurrentUser(): Promise<AuthUser | null> {
   return (await response.json()) as AuthUser
 }
 
+export async function openParticipant(login: string) {
+  const response = await fetch(`/api/admin/participants/${encodeURIComponent(login)}/session`, {
+    method: 'POST',
+    headers: await mutationHeaders(),
+  })
+  if (response.ok) return (await response.json()) as AuthUser
+  const failure = await readFailure(response)
+  throw new Error(failure.title ?? 'The desk could not be opened.')
+}
+
 export async function signIn(login: string, password: string) {
   const response = await fetch('/api/auth/login', {
     method: 'POST',

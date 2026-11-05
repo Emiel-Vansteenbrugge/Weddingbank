@@ -2,7 +2,7 @@ using WeddingBank.Domain.Game;
 
 namespace WeddingBank.Application.Game;
 
-public sealed class CaseService(ICaseStore cases, TimeProvider clock)
+public sealed class CaseService(ICaseStore cases, IDocumentGate gate, TimeProvider clock)
 {
     public async Task<IReadOnlyList<CaseSummary>> ListAsync(CancellationToken cancellationToken)
     {
@@ -219,7 +219,7 @@ public sealed class CaseService(ICaseStore cases, TimeProvider clock)
             .Where(file => file.IsOpenTo(login))
             .OrderBy(file => file.DisplayOrder)
             .ThenBy(file => file.Reference)
-            .Select(file => ReadingOf(file, login, includeDocuments: false))
+            .Select(file => ReadingOf(file, login, includeDocuments: false, DocumentLocks.None))
             .ToArray();
     }
 
@@ -231,23 +231,26 @@ public sealed class CaseService(ICaseStore cases, TimeProvider clock)
             return OperationResult<ReadingCase>.NotFound("That case is not available.");
         }
 
-        return OperationResult<ReadingCase>.Ok(ReadingOf(file, login, includeDocuments: true));
+        var locks = await gate.LocksForAsync(login, cancellationToken);
+        return OperationResult<ReadingCase>.Ok(ReadingOf(file, login, includeDocuments: true, locks));
     }
 
     public async Task<IReadOnlyList<ReadingDocument>> PapersForAsync(string login, CancellationToken cancellationToken)
     {
         var files = await cases.ListAsync(cancellationToken);
+        var locks = await gate.LocksForAsync(login, cancellationToken);
         return files
             .Where(file => file.IsOpenTo(login))
             .OrderBy(file => file.DisplayOrder)
             .ThenBy(file => file.Reference)
-            .SelectMany(file => OpenDocuments(file, login).Select(document => PaperOf(file, document)))
+            .SelectMany(file => OpenDocuments(file, login, locks).Select(document => PaperOf(file, document)))
             .ToArray();
     }
 
     public async Task<OperationResult<ReadingPaper>> ReadPaperAsync(string login, Guid documentId, CancellationToken cancellationToken)
     {
         var files = await cases.ListAsync(cancellationToken);
+        var locks = await gate.LocksForAsync(login, cancellationToken);
         foreach (var file in files)
         {
             var document = file.Documents.SingleOrDefault(item => item.Id == documentId);
@@ -256,7 +259,7 @@ public sealed class CaseService(ICaseStore cases, TimeProvider clock)
                 continue;
             }
 
-            return file.DocumentIsOpenTo(document, login)
+            return Visible(file, document, login, locks)
                 ? OperationResult<ReadingPaper>.Ok(PaperTextOf(file, document))
                 : OperationResult<ReadingPaper>.NotFound("That document is not available.");
         }
@@ -363,20 +366,31 @@ public sealed class CaseService(ICaseStore cases, TimeProvider clock)
         return new DocumentDetail(document.Id, document.CaseId, document.Reference, document.Title, document.Category, document.Description, document.Content, document.Status, document.Audience, document.DisplayOrder, document.CreatedAt, document.UpdatedAt);
     }
 
-    private static ReadingCase ReadingOf(CaseFile file, string login, bool includeDocuments)
+    private static ReadingCase ReadingOf(CaseFile file, string login, bool includeDocuments, DocumentLocks locks)
     {
         IReadOnlyList<ReadingDocument> documents = includeDocuments
-            ? OpenDocuments(file, login).Select(document => PaperOf(file, document)).ToArray()
+            ? OpenDocuments(file, login, locks).Select(document => PaperOf(file, document)).ToArray()
             : [];
         return new ReadingCase(file.Id, file.Reference, file.Title, file.Summary, file.Introduction, documents);
     }
 
-    private static IEnumerable<CaseDocument> OpenDocuments(CaseFile file, string login)
+    private static IEnumerable<CaseDocument> OpenDocuments(CaseFile file, string login, DocumentLocks locks)
     {
         return file.Documents
-            .Where(document => file.DocumentIsOpenTo(document, login))
+            .Where(document => Visible(file, document, login, locks))
             .OrderBy(document => document.DisplayOrder)
             .ThenBy(document => document.Reference);
+    }
+
+    private static bool Visible(CaseFile file, CaseDocument document, string login, DocumentLocks locks)
+    {
+        if (!file.IsOpenTo(login) || !Audiences.Includes(document.Audience, login))
+        {
+            return false;
+        }
+
+        var released = document.Status == DocumentStatuses.Published || locks.Ruled.Contains(document.Id);
+        return released && !locks.Hidden.Contains(document.Id);
     }
 
     private static ReadingDocument PaperOf(CaseFile file, CaseDocument document)

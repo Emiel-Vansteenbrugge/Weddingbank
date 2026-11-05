@@ -2,19 +2,17 @@ import { useEffect, useState } from 'react'
 import { bank } from '../public/content.ts'
 import type { AdminPageId } from '../../app/routes.ts'
 import { SiteLink } from '../../shared/SiteLink.tsx'
-import { fetchAudit, type AuditRow } from '../auth/api.ts'
+import { fetchAudit, openParticipant, visit, type AuditRow } from '../auth/api.ts'
+import { useSession } from '../auth/useSession.ts'
 import { fetchOverview, fetchParticipant, type GameOverview, type ParticipantDesk } from '../game/game-api.ts'
 import { HousePasswords } from './HousePasswords.tsx'
 import { CaseEditor, CaseList, DocumentEditor } from './CaseDesk.tsx'
+import { QuestEditor, QuestList, TaskEditor } from './QuestDesk.tsx'
 
 const rooms: Record<
-  Exclude<AdminPageId, 'overview' | 'participants' | 'participant' | 'audit-log' | 'settings' | 'not-found' | 'cases' | 'case' | 'case-document'>,
+  Exclude<AdminPageId, 'overview' | 'participants' | 'participant' | 'audit-log' | 'settings' | 'not-found' | 'cases' | 'case' | 'case-document' | 'tasks' | 'quest' | 'quest-task'>,
   { title: string; empty: string }
 > = {
-  tasks: {
-    title: 'Tasks',
-    empty: 'No tasks have been written. Individual and shared tasks can be added when the game is prepared.',
-  },
   hints: {
     title: 'Hints & messages',
     empty: 'No hints or messages have been sent. A note can go to Juul, to Amber, or to both once the game is running.',
@@ -40,6 +38,7 @@ const eventLabels: Record<string, string> = {
   'client.user_linked': 'Account linked',
   'client.user_unlinked': 'Account removed',
   'user.password_changed': 'Password changed',
+  'admin.participant_opened': 'Participant desk opened',
 }
 
 type AdminPagesProps = {
@@ -47,9 +46,11 @@ type AdminPagesProps = {
   participant?: string
   caseId?: string
   documentId?: string
+  questId?: string
+  taskId?: string
 }
 
-export function AdminPages({ page, participant, caseId, documentId }: AdminPagesProps) {
+export function AdminPages({ page, participant, caseId, documentId, questId, taskId }: AdminPagesProps) {
   const title =
     page === 'overview'
       ? 'Dashboard'
@@ -59,6 +60,10 @@ export function AdminPages({ page, participant, caseId, documentId }: AdminPages
           ? 'Cases'
           : page === 'case-document'
             ? 'Document'
+            : page === 'tasks' || page === 'quest'
+              ? 'Quests'
+              : page === 'quest-task'
+                ? 'Task'
             : page === 'audit-log'
               ? 'Audit log'
               : page === 'settings'
@@ -80,6 +85,9 @@ export function AdminPages({ page, participant, caseId, documentId }: AdminPages
     )
   }
 
+  if (page === 'tasks') return <QuestList />
+  if (page === 'quest') return <QuestEditor questId={questId ?? 'new'} />
+  if (page === 'quest-task') return <TaskEditor questId={questId ?? ''} taskId={taskId ?? 'new'} />
   if (page === 'cases') return <CaseList />
   if (page === 'case') return <CaseEditor caseId={caseId ?? 'new'} />
   if (page === 'case-document') return <DocumentEditor caseId={caseId ?? ''} documentId={documentId ?? 'new'} />
@@ -112,6 +120,7 @@ function GameSettings() {
 
 function GameDashboard() {
   const overview = useOverview()
+  const opening = useParticipantDesk()
   if (overview.status === 'loading') return <p className="section-note">Reading the game…</p>
   if (overview.status === 'error') {
     return (
@@ -126,7 +135,8 @@ function GameDashboard() {
     <>
       <p className="eyebrow">Dashboard</p>
       <h1>{game.status === 'NOT_STARTED' ? 'The game has not started.' : 'The game is running.'}</h1>
-      <ParticipantTable game={game} />
+      {opening.error ? <p className="form-status" role="alert">{opening.error}</p> : null}
+      <ParticipantTable game={game} pendingLogin={opening.pendingLogin} onOpen={opening.open} />
       <div className="empty-list">
         <section>
           <h2>Shared progress</h2>
@@ -151,6 +161,7 @@ function GameDashboard() {
 
 function ParticipantList() {
   const overview = useOverview()
+  const opening = useParticipantDesk()
   if (overview.status === 'loading') return <p className="section-note">Reading the participants…</p>
   if (overview.status === 'error') {
     return (
@@ -165,12 +176,21 @@ function ParticipantList() {
       <p className="eyebrow">Participants</p>
       <h1>Juul and Amber</h1>
       <p className="section-note">These are the only two participants. They are not created or removed here.</p>
-      <ParticipantTable game={overview.game} />
+      {opening.error ? <p className="form-status" role="alert">{opening.error}</p> : null}
+      <ParticipantTable game={overview.game} pendingLogin={opening.pendingLogin} onOpen={opening.open} />
     </>
   )
 }
 
-function ParticipantTable({ game }: { game: GameOverview }) {
+export function ParticipantTable({
+  game,
+  pendingLogin = null,
+  onOpen,
+}: {
+  game: GameOverview
+  pendingLogin?: string | null
+  onOpen: (login: string) => void
+}) {
   return (
     <table className="audit-table">
       <thead>
@@ -180,6 +200,7 @@ function ParticipantTable({ game }: { game: GameOverview }) {
           <th>Tasks</th>
           <th>Hints</th>
           <th>Last activity</th>
+          <th>Desk</th>
         </tr>
       </thead>
       <tbody>
@@ -194,6 +215,11 @@ function ParticipantTable({ game }: { game: GameOverview }) {
             <td>{person.availableTasks === 0 && person.completedTasks === 0 ? 'None open' : `${person.completedTasks} done`}</td>
             <td>{person.hintsSent === 0 ? 'None' : String(person.hintsSent)}</td>
             <td>{person.lastActivity ? formatWhen(person.lastActivity) : '—'}</td>
+            <td>
+              <button className="quiet-button" type="button" disabled={pendingLogin !== null} onClick={() => onOpen(person.login)}>
+                {pendingLogin === person.login ? 'Opening' : `Open as ${person.displayName}`}
+              </button>
+            </td>
           </tr>
         ))}
       </tbody>
@@ -201,9 +227,32 @@ function ParticipantTable({ game }: { game: GameOverview }) {
   )
 }
 
+function useParticipantDesk() {
+  const session = useSession()
+  const [pendingLogin, setPendingLogin] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+
+  async function open(login: string) {
+    if (pendingLogin) return
+    setPendingLogin(login)
+    setError(null)
+    try {
+      const user = await openParticipant(login)
+      session.establish(user)
+      visit('/client')
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'The desk could not be opened.')
+      setPendingLogin(null)
+    }
+  }
+
+  return { pendingLogin, error, open }
+}
+
 function ParticipantDetail({ login }: { login: string }) {
   const [desk, setDesk] = useState<ParticipantDesk | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const opening = useParticipantDesk()
 
   useEffect(() => {
     let active = true
@@ -232,6 +281,12 @@ function ParticipantDetail({ login }: { login: string }) {
     <>
       <p className="eyebrow">Participant</p>
       <h1>{desk.displayName}</h1>
+      <p>
+        <button className="quiet-button" type="button" disabled={opening.pendingLogin !== null} onClick={() => opening.open(desk.login)}>
+          {opening.pendingLogin === desk.login ? 'Opening' : `Open as ${desk.displayName}`}
+        </button>
+      </p>
+      {opening.error ? <p className="form-status" role="alert">{opening.error}</p> : null}
       <dl className="record">
         <dt>Login</dt>
         <dd>{desk.login}</dd>
@@ -239,8 +294,8 @@ function ParticipantDetail({ login }: { login: string }) {
         <dd>{desk.stage}</dd>
         <dt>Individual tasks</dt>
         <dd>{desk.availableTasks === 0 && desk.completedTasks === 0 ? 'None open' : `${desk.completedTasks} completed`}</dd>
-        <dt>Shared milestones completed</dt>
-        <dd>{desk.sharedCompletedTasks === 0 ? 'None' : String(desk.sharedCompletedTasks)}</dd>
+        <dt>Shared progress</dt>
+        <dd>{desk.sharedCompletedTasks} completed, {desk.sharedOpenTasks} open</dd>
         <dt>Hints and messages</dt>
         <dd>{desk.hintsWaiting === 0 ? 'None sent' : String(desk.hintsWaiting)}</dd>
         <dt>Private account</dt>

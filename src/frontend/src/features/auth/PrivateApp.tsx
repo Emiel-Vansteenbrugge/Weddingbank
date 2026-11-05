@@ -81,6 +81,7 @@ export function PrivateApp({ path, route }: { path: string; route: PrivateRoute 
           login={user.login}
           caseId={route.caseId}
           documentId={route.documentId}
+          questId={route.questId}
         />
       </ClientLayout>
     )
@@ -88,7 +89,7 @@ export function PrivateApp({ path, route }: { path: string; route: PrivateRoute 
 
   return (
     <AdminLayout path={path} displayName={user.displayName} onLogout={logout}>
-      <AdminPages page={route.page} participant={route.participant} caseId={route.caseId} documentId={route.documentId} />
+      <AdminPages page={route.page} participant={route.participant} caseId={route.caseId} documentId={route.documentId} questId={route.questId} taskId={route.taskId} />
     </AdminLayout>
   )
 }

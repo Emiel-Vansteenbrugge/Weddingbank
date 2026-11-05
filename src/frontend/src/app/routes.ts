@@ -16,6 +16,7 @@ export type ClientPageId =
   | 'cases'
   | 'case'
   | 'tasks'
+  | 'quest'
   | 'documents'
   | 'document'
   | 'correspondence'
@@ -31,6 +32,8 @@ export type AdminPageId =
   | 'case'
   | 'case-document'
   | 'tasks'
+  | 'quest'
+  | 'quest-task'
   | 'hints'
   | 'phone-requests'
   | 'events'
@@ -41,8 +44,8 @@ export type AdminPageId =
 export type AppRoute =
   | { area: 'public'; page: PublicPage; slug?: string }
   | { area: 'login' }
-  | { area: 'client'; page: ClientPageId; caseId?: string; documentId?: string }
-  | { area: 'admin'; page: AdminPageId; participant?: string; caseId?: string; documentId?: string }
+  | { area: 'client'; page: ClientPageId; caseId?: string; documentId?: string; questId?: string }
+  | { area: 'admin'; page: AdminPageId; participant?: string; caseId?: string; documentId?: string; questId?: string; taskId?: string }
 
 const clientPages: Record<string, ClientPageId> = {
   '/client': 'dashboard',
@@ -70,6 +73,8 @@ const adminPages: Record<string, AdminPageId> = {
 export function matchRoute(path: string): AppRoute {
   if (path === '/login' || path === '/client-access') return { area: 'login' }
   if (path === '/client' || path.startsWith('/client/')) {
+    const clientQuest = /^\/client\/tasks\/([0-9a-f-]{36})$/i.exec(path)
+    if (clientQuest) return { area: 'client', page: 'quest', questId: clientQuest[1] }
     const clientCase = /^\/client\/cases\/([0-9a-f-]{36})$/i.exec(path)
     if (clientCase) return { area: 'client', page: 'case', caseId: clientCase[1] }
     const clientDocument = /^\/client\/documents\/([0-9a-f-]{36})$/i.exec(path)
@@ -86,6 +91,11 @@ export function matchRoute(path: string): AppRoute {
         return { area: 'admin', page: 'participant', participant: 'Amber-D' }
       }
     }
+    if (path === '/admin/tasks/new') return { area: 'admin', page: 'quest', questId: 'new' }
+    const adminQuestTask = /^\/admin\/tasks\/([0-9a-f-]{36})\/tasks\/(new|[0-9a-f-]{36})$/i.exec(path)
+    if (adminQuestTask) return { area: 'admin', page: 'quest-task', questId: adminQuestTask[1], taskId: adminQuestTask[2] }
+    const adminQuest = /^\/admin\/tasks\/([0-9a-f-]{36})$/i.exec(path)
+    if (adminQuest) return { area: 'admin', page: 'quest', questId: adminQuest[1] }
     if (path === '/admin/cases/new') return { area: 'admin', page: 'case', caseId: 'new' }
     const adminDocument = /^\/admin\/cases\/([0-9a-f-]{36})\/documents\/(new|[0-9a-f-]{36})$/i.exec(path)
     if (adminDocument) {

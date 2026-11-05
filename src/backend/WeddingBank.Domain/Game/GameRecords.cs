@@ -188,4 +188,27 @@ public sealed class Submission
             SubmittedAt = submittedAt,
         };
     }
+
+    public static Submission Decide(Guid id, Guid assignmentId, string participantLogin, string answer, bool accepted, DateTimeOffset submittedAt)
+    {
+        if (!Participants.IsParticipant(participantLogin))
+        {
+            throw new ArgumentException("A submission belongs to Juul or Amber.", nameof(participantLogin));
+        }
+
+        if (string.IsNullOrEmpty(answer) || answer.Length > 2000)
+        {
+            throw new ArgumentException("A submission needs an answer.", nameof(answer));
+        }
+
+        return new Submission
+        {
+            Id = id,
+            AssignmentId = assignmentId,
+            ParticipantLogin = participantLogin,
+            Answer = answer,
+            Outcome = accepted ? "ACCEPTED" : "REFUSED",
+            SubmittedAt = submittedAt,
+        };
+    }
 }

@@ -4,12 +4,12 @@ import type { ClientPageId } from '../../app/routes.ts'
 import { SiteLink } from '../../shared/SiteLink.tsx'
 import { fetchDesk, type ParticipantDesk } from '../game/game-api.ts'
 import { ParticipantCase, ParticipantCases, ParticipantDocument, ParticipantDocuments } from './CaseRoom.tsx'
+import { ParticipantQuest, ParticipantQuests } from './QuestRoom.tsx'
 
 const rooms: Record<
-  Exclude<ClientPageId, 'dashboard' | 'accounts' | 'profile' | 'not-found' | 'cases' | 'case' | 'documents' | 'document'>,
+  Exclude<ClientPageId, 'dashboard' | 'accounts' | 'profile' | 'not-found' | 'cases' | 'case' | 'documents' | 'document' | 'tasks' | 'quest'>,
   { title: string; empty: string }
 > = {
-  tasks: { title: 'Tasks', empty: 'Nothing is waiting for you.' },
   correspondence: { title: 'Correspondence', empty: 'The house has not written.' },
   archive: { title: 'Archive', empty: 'The archive has not been opened.' },
 }
@@ -20,9 +20,10 @@ type ClientPagesProps = {
   login: string
   caseId?: string
   documentId?: string
+  questId?: string
 }
 
-export function ClientPages({ page, displayName, login, caseId, documentId }: ClientPagesProps) {
+export function ClientPages({ page, displayName, login, caseId, documentId, questId }: ClientPagesProps) {
   const title =
     page === 'dashboard'
       ? 'Dashboard'
@@ -30,7 +31,9 @@ export function ClientPages({ page, displayName, login, caseId, documentId }: Cl
         ? 'Accounts'
         : page === 'cases' || page === 'case'
           ? 'Cases'
-          : page === 'documents' || page === 'document'
+          : page === 'tasks' || page === 'quest'
+            ? 'Tasks'
+            : page === 'documents' || page === 'document'
             ? 'Documents'
             : page === 'profile'
               ? 'Profile'
@@ -71,6 +74,8 @@ export function ClientPages({ page, displayName, login, caseId, documentId }: Cl
     return <LiveDesk page={page} />
   }
 
+  if (page === 'tasks') return <ParticipantQuests />
+  if (page === 'quest') return <ParticipantQuest questId={questId ?? ''} />
   if (page === 'cases') return <ParticipantCases />
   if (page === 'case') return <ParticipantCase caseId={caseId ?? ''} />
   if (page === 'documents') return <ParticipantDocuments />
@@ -134,9 +139,11 @@ function LiveDesk({ page }: { page: 'dashboard' | 'accounts' }) {
       <p className="eyebrow">Dashboard</p>
       <h1>Welcome, {desk.displayName}.</h1>
       <p className="section-note">
-        {desk.stage === 'Not started'
+        {desk.stage === 'Not started' && desk.sharedCompletedTasks === 0 && desk.sharedOpenTasks === 0
           ? 'The matter has not started. Nothing new is waiting.'
-          : `Your matter is ${desk.stage.toLowerCase()}.`}
+          : desk.sharedOpenTasks > 0 && desk.availableTasks === 0 && desk.completedTasks === 0
+            ? 'Shared work is waiting.'
+            : `Your matter is ${desk.stage.toLowerCase()}.`}
       </p>
       <div className="empty-list">
         <section>
@@ -145,11 +152,11 @@ function LiveDesk({ page }: { page: 'dashboard' | 'accounts' }) {
         </section>
         <section>
           <h2>Shared progress</h2>
-          <p>{desk.sharedCompletedTasks === 0 ? 'Not started' : `${desk.sharedCompletedTasks} completed`}</p>
+          <p>{desk.sharedCompletedTasks === 0 && desk.sharedOpenTasks === 0 ? 'Not started' : `${desk.sharedCompletedTasks} completed, ${desk.sharedOpenTasks} open`}</p>
         </section>
         <section>
           <h2>Tasks</h2>
-          <p>{desk.availableTasks === 0 ? 'Nothing is waiting for you.' : `${desk.availableTasks} open`}</p>
+          <p>{desk.availableTasks + desk.sharedOpenTasks === 0 ? 'Nothing is waiting for you.' : `${desk.availableTasks + desk.sharedOpenTasks} open`}</p>
         </section>
         <section>
           <h2>Correspondence</h2>

@@ -1,5 +1,6 @@
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.HttpOverrides;
+using WeddingBank.Api;
 using WeddingBank.Api.Enquiries;
 using WeddingBank.Api.Game;
 using WeddingBank.Api.Identity;
@@ -7,6 +8,11 @@ using WeddingBank.Infrastructure.Enquiries;
 using WeddingBank.Infrastructure.Game;
 using WeddingBank.Infrastructure.Identity;
 using WeddingBank.Infrastructure.Persistence;
+
+if (ChapterOneCli.Requested(args))
+{
+    Environment.Exit(await ChapterOneCli.RunAsync(args));
+}
 
 var builder = WebApplication.CreateBuilder(args);
 

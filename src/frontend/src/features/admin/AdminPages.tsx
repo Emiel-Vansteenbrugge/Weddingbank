@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { bank } from '../public/content.ts'
 import type { AdminPageId } from '../../app/routes.ts'
 import { SiteLink } from '../../shared/SiteLink.tsx'
 import { fetchAudit, openParticipant, visit, type AuditRow } from '../auth/api.ts'
-import { useSession } from '../auth/useSession.ts'
+import { SessionContext } from '../auth/session-context.ts'
 import { fetchOverview, fetchParticipant, type GameOverview, type ParticipantDesk } from '../game/game-api.ts'
 import { HousePasswords } from './HousePasswords.tsx'
 import { CaseEditor, CaseList, DocumentEditor } from './CaseDesk.tsx'
@@ -228,11 +228,12 @@ export function ParticipantTable({
 }
 
 function useParticipantDesk() {
-  const session = useSession()
+  const session = useContext(SessionContext)
   const [pendingLogin, setPendingLogin] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
   async function open(login: string) {
+    if (!session) throw new Error('Session is only available inside the private house.')
     if (pendingLogin) return
     setPendingLogin(login)
     setError(null)

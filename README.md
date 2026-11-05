@@ -47,6 +47,18 @@ dotnet run --project src/backend/WeddingBank.Api -- --seed-development-users
 
 De logins zijn `juul`, `amber` en `administrator`. De wachtwoorden staan alleen in `src/backend/WeddingBank.Api/appsettings.Development.json` en zijn voor deze machine.
 
+Chapter I wordt niet bij het opstarten aangemaakt. Het commando hieronder gebruikt de database van de gekozen omgeving, maakt ontbrekende records aan en herstelt afwijkende Chapter I-configuratie. Inzendingen en een voltooide opdracht blijven staan. Het start de API niet en sluit af zodra de initialisatie klaar is.
+
+```bash
+dotnet run --project src/backend/WeddingBank.Api -- --initialize-chapter-i
+```
+
+Op de server, in de draaiende API-container:
+
+```bash
+docker exec weddingbank-api dotnet WeddingBank.Api.dll --initialize-chapter-i
+```
+
 ## Controles
 
 ```bash

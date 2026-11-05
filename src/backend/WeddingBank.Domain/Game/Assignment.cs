@@ -56,6 +56,22 @@ public sealed class Assignment
         UpdatedAt = now;
     }
 
+    public void LinkTask(Guid taskId, DateTimeOffset now)
+    {
+        if (TaskId == taskId)
+        {
+            return;
+        }
+
+        if (TaskId is not null)
+        {
+            throw new InvalidOperationException("This assignment already belongs to another task.");
+        }
+
+        TaskId = taskId;
+        UpdatedAt = now;
+    }
+
     public void Complete(DateTimeOffset now)
     {
         Completed = true;

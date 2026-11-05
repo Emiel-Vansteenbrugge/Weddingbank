@@ -15,6 +15,7 @@ public static class GameServiceCollectionExtensions
         services.AddScoped<IQuestStore>(provider => provider.GetRequiredService<EfQuestStore>());
         services.AddScoped<IDocumentGate>(provider => provider.GetRequiredService<EfQuestStore>());
         services.AddScoped<QuestService>();
+        services.AddScoped<ChapterOneInitializer>();
         return services;
     }
 }

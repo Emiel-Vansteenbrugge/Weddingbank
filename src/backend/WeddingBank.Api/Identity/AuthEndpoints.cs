@@ -2,6 +2,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Hosting;
 using WeddingBank.Application;
 using WeddingBank.Application.Identity;
 using HouseSignIn = WeddingBank.Application.Identity.AuthenticationService;
@@ -26,6 +28,11 @@ internal static class AuthEndpoints
             .AllowAnonymous()
             .AddEndpointFilter(HouseRequestGuard.Invoke);
         app.MapGet("/api/auth/me", MeAsync).RequireAuthorization();
+        app.MapGet("/api/auth/test-accounts", ListTestAccountsAsync).AllowAnonymous();
+        app.MapPost("/api/auth/test-accounts/{login}/session", SwitchTestAccountAsync)
+            .AllowAnonymous()
+            .RequireRateLimiting("login")
+            .AddEndpointFilter(HouseRequestGuard.Invoke);
 
         app.MapGet("/api/admin/audit", AuditAsync).RequireAuthorization("Admin");
         app.MapPost("/api/admin/participants/{login}/session", OpenParticipantAsync)
@@ -97,6 +104,52 @@ internal static class AuthEndpoints
             principal.FindFirstValue(HouseAuthenticationExtensions.LoginClaim) ?? "",
             principal.Identity?.Name ?? "",
             principal.FindAll(ClaimTypes.Role).Select(claim => claim.Value).ToArray()));
+    }
+
+    private static async Task<IResult> ListTestAccountsAsync(
+        HttpContext http,
+        HouseSignIn authentication,
+        CancellationToken cancellationToken)
+    {
+        if (!TestAccountSwitch.Allowed(http.RequestServices.GetRequiredService<IHostEnvironment>(), http.RequestServices.GetRequiredService<IConfiguration>()))
+        {
+            return Results.NotFound();
+        }
+
+        return Results.Ok(await authentication.ListTestAccountsAsync(cancellationToken));
+    }
+
+    private static async Task<IResult> SwitchTestAccountAsync(
+        string login,
+        ClaimsPrincipal principal,
+        HttpContext http,
+        HouseSignIn authentication,
+        CancellationToken cancellationToken)
+    {
+        if (!TestAccountSwitch.Allowed(http.RequestServices.GetRequiredService<IHostEnvironment>(), http.RequestServices.GetRequiredService<IConfiguration>()))
+        {
+            return Results.NotFound();
+        }
+
+        var sessionValue = principal.FindFirstValue(HouseAuthenticationExtensions.SessionClaim);
+        Guid? sessionId = Guid.TryParse(sessionValue, out var parsed) ? parsed : null;
+        var switched = await authentication.SwitchTestAccountAsync(sessionId, login, HouseRequestGuard.ClientIp(http), cancellationToken);
+        if (switched is null)
+        {
+            return Results.Problem(statusCode: StatusCodes.Status404NotFound, title: "That account could not be opened.");
+        }
+
+        await http.SignInAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            HouseAuthenticationExtensions.PrincipalFor(switched.User, switched.SessionId),
+            new AuthenticationProperties
+            {
+                IsPersistent = true,
+                IssuedUtc = switched.IssuedAt,
+                ExpiresUtc = switched.ExpiresAt,
+                AllowRefresh = false,
+            });
+        return Results.Ok(switched.User);
     }
 
     private static async Task<IResult> AuditAsync(

@@ -2,6 +2,8 @@ namespace WeddingBank.Application.Identity;
 
 public sealed record AuthUser(Guid Id, string Login, string DisplayName, IReadOnlyList<string> Roles);
 
+public sealed record TestAccountChoice(string Login, string Label);
+
 public sealed record SignedIn(AuthUser User, Guid SessionId, DateTimeOffset IssuedAt, DateTimeOffset ExpiresAt);
 
 public sealed record AuditEntry(

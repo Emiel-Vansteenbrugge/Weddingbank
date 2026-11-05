@@ -1,8 +1,9 @@
-import { useEffect, useLayoutEffect } from 'react'
+import { useEffect, useLayoutEffect, type ReactNode } from 'react'
 import type { AppRoute } from '../../app/routes.ts'
 import { homeFor } from '../../app/routes.ts'
 import { visit } from './api.ts'
 import { LoginPage } from './LoginPage.tsx'
+import { TestAccountBar } from './TestAccountBar.tsx'
 import { useSession } from './useSession.ts'
 import { ClientLayout } from '../client/ClientLayout.tsx'
 import { ClientPages } from '../client/ClientPages.tsx'
@@ -26,33 +27,44 @@ export function PrivateApp({ path, route }: { path: string; route: PrivateRoute 
     if (needsLogin) visit('/login')
   }, [needsLogin])
 
-  if (route.area === 'login') return <LoginPage />
+  const activeLogin = session.state.status === 'ready' ? session.state.user.login : null
+
+  function frame(child: ReactNode) {
+    return (
+      <>
+        <TestAccountBar activeLogin={activeLogin} onSwitched={session.establish} />
+        {child}
+      </>
+    )
+  }
+
+  if (route.area === 'login') return frame(<LoginPage />)
 
   if (session.state.status === 'loading') {
-    return (
+    return frame(
       <main id="main" className="panel-status">
         <p>Opening the record…</p>
-      </main>
+      </main>,
     )
   }
 
   if (session.state.status === 'error') {
-    return (
+    return frame(
       <main id="main" className="panel-status">
         <h1>The record cannot be opened just now.</h1>
         <p>The house could not confirm this session.</p>
         <button className="quiet-button" type="button" onClick={session.retry}>
           Try again
         </button>
-      </main>
+      </main>,
     )
   }
 
   if (session.state.status !== 'ready') {
-    return (
+    return frame(
       <main id="main" className="panel-status">
         <p>Sign in to continue.</p>
-      </main>
+      </main>,
     )
   }
 
@@ -65,15 +77,15 @@ export function PrivateApp({ path, route }: { path: string; route: PrivateRoute 
   }
 
   if (route.area === 'client' && !user.roles.includes('CLIENT')) {
-    return <Forbidden home={home} onLogout={logout} />
+    return frame(<Forbidden home={home} onLogout={logout} />)
   }
 
   if (route.area === 'admin' && !user.roles.includes('ADMIN')) {
-    return <Forbidden home={home} onLogout={logout} />
+    return frame(<Forbidden home={home} onLogout={logout} />)
   }
 
   if (route.area === 'client') {
-    return (
+    return frame(
       <ClientLayout path={path} displayName={user.displayName} onLogout={logout}>
         <ClientPages
           page={route.page}
@@ -83,14 +95,14 @@ export function PrivateApp({ path, route }: { path: string; route: PrivateRoute 
           documentId={route.documentId}
           questId={route.questId}
         />
-      </ClientLayout>
+      </ClientLayout>,
     )
   }
 
-  return (
+  return frame(
     <AdminLayout path={path} displayName={user.displayName} onLogout={logout}>
       <AdminPages page={route.page} participant={route.participant} caseId={route.caseId} documentId={route.documentId} questId={route.questId} taskId={route.taskId} />
-    </AdminLayout>
+    </AdminLayout>,
   )
 }
 

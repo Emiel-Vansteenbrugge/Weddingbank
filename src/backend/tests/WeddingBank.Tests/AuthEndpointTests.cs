@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using WeddingBank.Api.Identity;
 using WeddingBank.Application.Game;
 using WeddingBank.Application.Identity;
 using WeddingBank.Domain.Identity;
@@ -254,6 +255,15 @@ public sealed class AuthEndpointTests : IClassFixture<AuthApiFixture>
         Assert.Equal(HttpStatusCode.Unauthorized, (await _fixture.CreateClient().GetAsync("/api/admin/house-accounts")).StatusCode);
     }
 
+    [Fact]
+    public async Task Test_account_switching_stays_hidden_unless_the_server_enables_it()
+    {
+        using var client = _fixture.CreateClient();
+
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync("/api/auth/test-accounts")).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await PostAsync(client, "/api/auth/test-accounts/juul/session")).StatusCode);
+    }
+
     private static async Task<HttpResponseMessage> SendAsync(HttpClient client, string path, object body)
     {
         var request = new HttpRequestMessage(HttpMethod.Post, path)
@@ -293,12 +303,17 @@ public sealed class AuthEndpointTests : IClassFixture<AuthApiFixture>
     private sealed record CsrfResponse(string? Token);
 }
 
-public sealed class AuthApiFixture : IDisposable
+public class AuthApiFixture : IDisposable
 {
     private const string ClientPassword = "client-password-1894";
     private const string AdminPassword = "admin-password-1894";
 
     public AuthApiFixture()
+        : this(false)
+    {
+    }
+
+    protected AuthApiFixture(bool testAccountsEnabled)
     {
         var store = new InMemoryIdentityStore();
         var hasher = new IdentityPasswordHasher();
@@ -331,6 +346,7 @@ public sealed class AuthApiFixture : IDisposable
         Factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder.UseSetting("Auth:AllowedOrigins:0", "http://localhost:5173");
+            builder.UseSetting(TestAccountSwitch.EnabledKey, testAccountsEnabled ? "true" : "false");
             builder.ConfigureTestServices(services =>
             {
                 services.RemoveAll<IIdentityStore>();

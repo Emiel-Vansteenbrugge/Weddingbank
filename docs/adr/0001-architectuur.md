@@ -82,6 +82,14 @@ De applicatie schrijft beheeracties, aanmeldingen, lockouts en MFA-gebeurtenisse
 
 Dat is beveiliging op applicatieniveau. Het is geen onveranderbare opslag. De migratierol, de database-superuser, een databaseherstel en iedereen met toegang tot de host kunnen de rijen wel wijzigen. Een herstel vervangt het auditlog door de inhoud van de dump. Deze opzet claimt geen write-once-opslag.
 
+## Spelreset (nog niet gebouwd)
+
+Dit is een vastgelegde eis, geen geïmplementeerde functie. De reset is alleen voor een bevoegde beheerder en vraagt een expliciete bevestiging voordat iets gebeurt.
+
+Een reset geeft Juul en Amber allebei een schone speelronde. Hij wist deelnemersvoortgang: voltooide opdrachten, inzendingen, puzzelvoortgang, gelezen berichten, hints en andere mededelingen, telefoonverzoeken en overige speltoestand. Accounts, wachtwoorden, dossiers, documenten, quests, taken, aanvaarde antwoorden en ontgrendelregels blijven staan. Het auditlog blijft staan en krijgt een regel dat de reset is uitgevoerd.
+
+Dit is geen databaseherstel en geen testomgeving leegmaken. De spelinhoud zelf wordt niet verwijderd of herschreven. De bedoeling is dat het huis het spel kan uitspelen, de oplossingen kan nakijken, één keer kan resetten, en de deelnemers op de trouwdag een schone ronde geeft.
+
 ## CI/CD
 
 De operationele keten staat in [docs/deployment/github.md](../deployment/github.md). Een push naar `main` deployt productie.

@@ -16,6 +16,8 @@ public sealed class AuditEvent
     public const string UserPasswordChanged = "user.password_changed";
     public const string ParticipantOpened = "admin.participant_opened";
 
+    public const string TestAccountSwitched = "test.account_switched";
+
     private AuditEvent()
     {
     }

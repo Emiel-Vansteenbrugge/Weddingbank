@@ -45,6 +45,7 @@ services:
       - egress
     environment:
       ASPNETCORE_ENVIRONMENT: Production
+      TestAccounts__Enabled: "true"
       POSTGRES_HOST: postgres
       POSTGRES_USER: ${POSTGRES_USER:-weddingbank}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-weddingbank}

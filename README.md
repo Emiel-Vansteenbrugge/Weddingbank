@@ -63,9 +63,9 @@ docker exec weddingbank-api dotnet WeddingBank.Api.dll --initialize-chapter-i
 
 Deze wisselaar is tijdelijk en moet vóór de trouwdag weg. Verwijder dan `TestAccountSwitch`, de routes `/api/auth/test-accounts`, `TestAccountBar` en de bijbehorende stijl.
 
-De knoppen Juul, Amber en Administrator verschijnen alleen als de server dat toestaat. De frontend beslist dat niet. De server weigert het verzoek met 404 zolang `TestAccounts:Enabled` niet expliciet `true` is, en ook altijd wanneer `ASPNETCORE_ENVIRONMENT` `Production` is. Een lokale `dotnet run` zet de schakelaar in `launchSettings.json`. Het productiecompose-bestand zet hem niet en draait als Production, dus daar blijft de wisselaar uit, ook als iemand de variabele per ongeluk in `.env` zet zonder het compose-bestand én de omgevingsnaam te wijzigen.
+De knoppen Juul, Amber en Administrator verschijnen alleen als de server dat toestaat. De frontend beslist dat niet. De server weigert het verzoek met 404 zolang `TestAccounts:Enabled` niet expliciet `true` is. De omgevingsnaam maakt daarvoor niet uit. Een lokale `dotnet run` zet de schakelaar in `launchSettings.json`. Het productiecompose-bestand zet `TestAccounts__Enabled=true`, omdat het testen op de publieke site gebeurt. Zet die regel op `false` of verwijder de wisselaar vóór de trouwdag.
 
-`test.wedding-bank.evsb.io` is geen aparte serveromgeving. Die site gebruikt hetzelfde Production-compose als de live site. De wisselaar werkt daar pas als die stack zelf geen Production is én `TestAccounts__Enabled=true` alleen daar staat.
+`test.wedding-bank.evsb.io` is geen aparte serveromgeving. Die site gebruikt hetzelfde compose-bestand als de live site, dus de wisselaar staat daar tegelijk aan en uit.
 
 Wisselen maakt een gewone sessie voor een bestaand huisaccount. Het maakt geen accounts, wijzigt geen wachtwoorden en raakt de spelvoortgang niet.
 

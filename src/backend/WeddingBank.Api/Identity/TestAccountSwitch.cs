@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 
 namespace WeddingBank.Api.Identity;
 
@@ -8,10 +7,8 @@ internal static class TestAccountSwitch
 {
     public const string EnabledKey = "TestAccounts:Enabled";
 
-    public static bool Allowed(IHostEnvironment environment, IConfiguration configuration)
+    public static bool Allowed(IConfiguration configuration)
     {
-        return !environment.IsProduction()
-            && bool.TryParse(configuration[EnabledKey], out var enabled)
-            && enabled;
+        return bool.TryParse(configuration[EnabledKey], out var enabled) && enabled;
     }
 }

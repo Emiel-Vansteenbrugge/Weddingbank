@@ -1,8 +1,6 @@
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.Hosting;
 using WeddingBank.Api.Identity;
 
 namespace WeddingBank.Tests;
@@ -10,13 +8,12 @@ namespace WeddingBank.Tests;
 public sealed class TestAccountSwitchTests
 {
     [Fact]
-    public void Production_rejects_the_switcher_even_when_the_flag_is_set()
+    public void The_switcher_follows_the_explicit_flag_in_every_environment()
     {
         var enabled = Config(true);
 
-        Assert.False(TestAccountSwitch.Allowed(new NamedEnvironment(Environments.Production), enabled));
-        Assert.False(TestAccountSwitch.Allowed(new NamedEnvironment(Environments.Development), Config(false)));
-        Assert.True(TestAccountSwitch.Allowed(new NamedEnvironment(Environments.Development), enabled));
+        Assert.True(TestAccountSwitch.Allowed(enabled));
+        Assert.False(TestAccountSwitch.Allowed(Config(false)));
     }
 
     private static IConfiguration Config(bool enabled)
@@ -27,17 +24,6 @@ public sealed class TestAccountSwitchTests
                 [TestAccountSwitch.EnabledKey] = enabled ? "true" : "false",
             })
             .Build();
-    }
-
-    private sealed class NamedEnvironment(string name) : IHostEnvironment
-    {
-        public string EnvironmentName { get; set; } = name;
-
-        public string ApplicationName { get; set; } = "WeddingBank.Api";
-
-        public string ContentRootPath { get; set; } = ".";
-
-        public IFileProvider ContentRootFileProvider { get; set; } = new NullFileProvider();
     }
 }
 

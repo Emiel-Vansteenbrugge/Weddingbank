@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using WeddingBank.Application;
 using WeddingBank.Application.Identity;
 using HouseSignIn = WeddingBank.Application.Identity.AuthenticationService;
@@ -111,7 +110,7 @@ internal static class AuthEndpoints
         HouseSignIn authentication,
         CancellationToken cancellationToken)
     {
-        if (!TestAccountSwitch.Allowed(http.RequestServices.GetRequiredService<IHostEnvironment>(), http.RequestServices.GetRequiredService<IConfiguration>()))
+        if (!TestAccountSwitch.Allowed(http.RequestServices.GetRequiredService<IConfiguration>()))
         {
             return Results.NotFound();
         }
@@ -126,7 +125,7 @@ internal static class AuthEndpoints
         HouseSignIn authentication,
         CancellationToken cancellationToken)
     {
-        if (!TestAccountSwitch.Allowed(http.RequestServices.GetRequiredService<IHostEnvironment>(), http.RequestServices.GetRequiredService<IConfiguration>()))
+        if (!TestAccountSwitch.Allowed(http.RequestServices.GetRequiredService<IConfiguration>()))
         {
             return Results.NotFound();
         }

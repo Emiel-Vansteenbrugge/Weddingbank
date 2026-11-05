@@ -81,6 +81,8 @@ public sealed class Quest
 
     public int DisplayOrder { get; private set; }
 
+    public Guid? ReleasedByTaskId { get; private set; }
+
     public DateTimeOffset CreatedAt { get; private set; }
 
     public DateTimeOffset UpdatedAt { get; private set; }
@@ -150,9 +152,21 @@ public sealed class Quest
         UpdatedAt = now;
     }
 
+    public void HoldUntil(Guid taskId, DateTimeOffset now)
+    {
+        ReleasedByTaskId = taskId;
+        UpdatedAt = now;
+    }
+
     public bool IsOpenTo(string login)
     {
         return Status == CaseStatuses.Published && Audiences.Includes(Audience, login);
+    }
+
+    public bool IsReleased(IEnumerable<Assignment> assignments, string login)
+    {
+        return ReleasedByTaskId is not Guid taskId
+            || assignments.Any(assignment => assignment.TaskId == taskId && assignment.CountsFor(login) && assignment.Completed);
     }
 
     public QuestTask AddTask(

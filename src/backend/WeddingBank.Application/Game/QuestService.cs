@@ -233,9 +233,9 @@ public sealed class QuestService(IQuestStore quests, ICaseStore cases, TimeProvi
     public async Task<IReadOnlyList<ReadingQuestSummary>> ListForAsync(string login, CancellationToken cancellationToken)
     {
         var files = await quests.ListAsync(cancellationToken);
-        var assignments = await quests.AssignmentsForAsync(files.SelectMany(file => file.Tasks.Select(task => task.Id)).ToArray(), cancellationToken);
+        var assignments = await quests.AssignmentsForAsync(TaskIds(files), cancellationToken);
         return files
-            .Where(file => file.IsOpenTo(login))
+            .Where(file => file.IsOpenTo(login) && file.IsReleased(assignments, login))
             .OrderBy(file => file.DisplayOrder)
             .ThenBy(file => file.Reference)
             .Select(file => ReadingSummaryOf(file, login, assignments))
@@ -251,7 +251,11 @@ public sealed class QuestService(IQuestStore quests, ICaseStore cases, TimeProvi
             return OperationResult<ReadingQuest>.NotFound("That quest is not available.");
         }
 
-        var assignments = await quests.AssignmentsForAsync(file.Tasks.Select(task => task.Id).ToArray(), cancellationToken);
+        var assignments = await quests.AssignmentsForAsync(TaskIds([file]), cancellationToken);
+        if (!file.IsReleased(assignments, login))
+        {
+            return OperationResult<ReadingQuest>.NotFound("That quest is not available.");
+        }
         var reading = await WithCaseAsync(ReadingOf(file, login, assignments), cancellationToken);
         return reading.Tasks.Count == 0
             ? OperationResult<ReadingQuest>.NotFound("That quest is not available.")
@@ -271,8 +275,14 @@ public sealed class QuestService(IQuestStore quests, ICaseStore cases, TimeProvi
             return OperationResult<AnswerOutcome>.NotFound("That task is not available.");
         }
 
+        var known = await quests.AssignmentsForAsync(TaskIds([file]), cancellationToken);
+        if (!file.IsReleased(known, login))
+        {
+            return OperationResult<AnswerOutcome>.NotFound("That task is not available.");
+        }
+
         var task = file.Tasks.Single(item => item.Id == taskId);
-        var assignment = (await quests.AssignmentsForAsync([taskId], cancellationToken)).SingleOrDefault();
+        var assignment = known.SingleOrDefault(item => item.TaskId == taskId);
         if (!task.IsVisibleTo(login, assignment) || assignment is null)
         {
             return OperationResult<AnswerOutcome>.NotFound("That task is not available.");
@@ -507,6 +517,14 @@ public sealed class QuestService(IQuestStore quests, ICaseStore cases, TimeProvi
         var names = await CaseNamesAsync(cancellationToken);
         var file = (await cases.ListAsync(cancellationToken)).SingleOrDefault(item => item.Id == reading.CaseId);
         return reading with { CaseReference = names.GetValueOrDefault(reading.CaseId, ""), CaseTitle = file?.Title ?? "" };
+    }
+
+    private static Guid[] TaskIds(IEnumerable<Quest> files)
+    {
+        return files
+            .SelectMany(file => file.Tasks.Select(task => task.Id).Concat(file.ReleasedByTaskId is Guid release ? [release] : []))
+            .Distinct()
+            .ToArray();
     }
 
     private static IEnumerable<(QuestTask Task, Assignment Assignment)> VisibleTasks(Quest file, string login, IReadOnlyList<Assignment> assignments)

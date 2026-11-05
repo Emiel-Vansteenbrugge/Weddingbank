@@ -23,8 +23,10 @@ public sealed class ChapterOneInitializerTests
             Assert.Empty(first.Conflicts);
             Assert.Contains(first.Lines, line => line == "created case CH-I-001");
             Assert.Contains(first.Lines, line => line == "created quest CH-I-QUEST-001");
+            Assert.Contains(first.Lines, line => line == "created quest CH-I-QUEST-002");
             Assert.Contains(first.Lines, line => line == "recorded answer CH-I-TASK-001");
             Assert.Contains(first.Lines, line => line == "linked unlock CH-I-DOC-007");
+            Assert.Contains(first.Lines, line => line == "held quest CH-I-QUEST-002 until CH-I-TASK-001");
         }
 
         Guid caseId;
@@ -34,25 +36,30 @@ public sealed class ChapterOneInitializerTests
         await using (var db = new WeddingBankDbContext(options))
         {
             Assert.Equal(1, await db.CaseFiles.CountAsync(file => file.Reference == "CH-I-001"));
-            Assert.Equal(7, await db.CaseDocuments.CountAsync());
-            Assert.Equal(6, await db.CaseDocuments.CountAsync(document => document.Status == DocumentStatuses.Published));
+            Assert.Equal(11, await db.CaseDocuments.CountAsync());
+            Assert.Equal(9, await db.CaseDocuments.CountAsync(document => document.Status == DocumentStatuses.Published));
             var locked = await db.CaseDocuments.SingleAsync(document => document.Reference == "CH-I-DOC-007");
             Assert.Equal(DocumentStatuses.Draft, locked.Status);
+            Assert.Equal(DocumentStatuses.Draft, (await db.CaseDocuments.SingleAsync(document => document.Reference == "CH-I-DOC-011")).Status);
+            Assert.DoesNotContain("29 October 2026", (await db.CaseDocuments.SingleAsync(document => document.Reference == "CH-I-DOC-003")).Content, StringComparison.Ordinal);
             Assert.Equal(Audiences.Juul, (await db.CaseDocuments.SingleAsync(document => document.Reference == "CH-I-DOC-004")).Audience);
             Assert.Equal(Audiences.Amber, (await db.CaseDocuments.SingleAsync(document => document.Reference == "CH-I-DOC-005")).Audience);
-            var quest = await db.Quests.Include(item => item.Tasks).ThenInclude(task => task.Answers).SingleAsync();
+            var quest = await db.Quests.Include(item => item.Tasks).ThenInclude(task => task.Answers).SingleAsync(item => item.Reference == "CH-I-QUEST-001");
             var task = quest.Tasks.Single();
+            var second = await db.Quests.Include(item => item.Tasks).SingleAsync(item => item.Reference == "CH-I-QUEST-002");
+            Assert.Equal(task.Id, second.ReleasedByTaskId);
             Assert.Equal(CaseStatuses.Published, quest.Status);
             Assert.Equal(Audiences.Both, quest.Audience);
             Assert.Equal(QuestKinds.Main, quest.Kind);
             Assert.Equal(TaskStatuses.Published, task.Status);
             Assert.Equal(ProgressScope.Shared, task.Scope);
             Assert.Equal(["REG-1026-17"], task.Answers.Select(answer => answer.Text).ToArray());
-            var assignment = await db.Assignments.SingleAsync();
+            var assignment = await db.Assignments.SingleAsync(item => item.TaskId == task.Id);
             Assert.Equal(ProgressScope.Shared, assignment.Scope);
-            Assert.Equal(task.Id, assignment.TaskId);
             Assert.False(assignment.Completed);
             assignment.Complete(now);
+            var later = await db.Assignments.SingleAsync(item => item.TaskId == second.Tasks.Single().Id);
+            later.Complete(now);
             submissionId = Guid.CreateVersion7();
             db.Submissions.Add(Submission.Decide(submissionId, assignment.Id, Participants.Juul, "REG-1026-14", false, now));
             task.ReplaceAnswers([(Guid.CreateVersion7(), "WRONG")]);
@@ -72,23 +79,27 @@ public sealed class ChapterOneInitializerTests
             Assert.Contains(second.Lines, line => line == "repaired answer CH-I-TASK-001");
             Assert.Contains(second.Lines, line => line == "held document CH-I-DOC-007");
             Assert.Contains(second.Lines, line => line == "kept completed assignment CH-I-TASK-001");
+            Assert.Contains(second.Lines, line => line == "kept completed assignment CH-I-TASK-002");
+            Assert.Contains(second.Lines, line => line == "unchanged release CH-I-QUEST-002");
         }
 
         await using (var db = new WeddingBankDbContext(options))
         {
             Assert.Equal(caseId, (await db.CaseFiles.SingleAsync()).Id);
-            Assert.Equal(questId, (await db.Quests.SingleAsync()).Id);
-            Assert.Equal(1, await db.Quests.CountAsync());
-            Assert.Equal(1, await db.QuestTasks.CountAsync());
-            Assert.Equal(1, await db.Assignments.CountAsync());
-            Assert.Equal(1, await db.DocumentUnlocks.CountAsync());
-            var assignment = await db.Assignments.SingleAsync();
-            Assert.Equal(assignmentId, assignment.Id);
+            Assert.Equal(questId, (await db.Quests.SingleAsync(item => item.Reference == "CH-I-QUEST-001")).Id);
+            Assert.Equal(2, await db.Quests.CountAsync());
+            Assert.Equal(2, await db.QuestTasks.CountAsync());
+            Assert.Equal(2, await db.Assignments.CountAsync());
+            Assert.Equal(5, await db.DocumentUnlocks.CountAsync());
+            var assignment = await db.Assignments.SingleAsync(item => item.Id == assignmentId);
             Assert.True(assignment.Completed);
+            Assert.True((await db.Assignments.SingleAsync(item => item.Id != assignmentId)).Completed);
             Assert.Equal(submissionId, (await db.Submissions.SingleAsync()).Id);
-            var answer = await db.TaskAnswers.SingleAsync();
+            var taskId = (await db.QuestTasks.SingleAsync(item => item.Reference == "CH-I-TASK-001")).Id;
+            var answer = await db.TaskAnswers.SingleAsync(item => item.TaskId == taskId);
             Assert.Equal("REG-1026-17", answer.Text);
             Assert.Equal(DocumentStatuses.Draft, (await db.CaseDocuments.SingleAsync(document => document.Reference == "CH-I-DOC-007")).Status);
+            Assert.Equal(DocumentStatuses.Draft, (await db.CaseDocuments.SingleAsync(document => document.Reference == "CH-I-DOC-011")).Status);
         }
     }
 

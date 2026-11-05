@@ -27,6 +27,22 @@ public static class ChapterOneCatalog
     public const string SuccessMessage = "The registry entry has been identified. The associated record is now available for examination.";
     public const string LockedDocument = "CH-I-DOC-007";
 
+    public const string SecondQuestReference = "CH-I-QUEST-002";
+    public const string SecondQuestTitle = "The Unconfirmed Transfer";
+    public const string SecondQuestDescription = "The supporting record was transferred to departmental review on 30 October 2026. The receiving department has not confirmed physical receipt.";
+    public const string SecondQuestInstructions = "Using the available personal records and the Departmental Transfer Register, identify the department that received the supporting documentation associated with the transfer.";
+    public const string SecondTaskReference = "CH-I-TASK-002";
+    public const string SecondTaskTitle = "Identify the Receiving Department";
+    public const string SecondTaskInstructions = "Using the available personal records and the Departmental Transfer Register, identify the department that received the supporting documentation associated with the transfer.\n\nSubmit the name of the receiving department.";
+    public const string SecondAnswer = "Compliance";
+    public const string SecondLockedDocument = "CH-I-DOC-011";
+
+    public static readonly ChapterOneQuest[] Quests =
+    [
+        new(QuestReference, QuestTitle, QuestDescription, QuestInstructions, true, null, new ChapterOneTask(TaskReference, TaskTitle, TaskInstructions, AcceptedAnswer, SuccessMessage, [LockedDocument, "CH-I-DOC-008", "CH-I-DOC-009", "CH-I-DOC-010"])),
+        new(SecondQuestReference, SecondQuestTitle, SecondQuestDescription, SecondQuestInstructions, true, TaskReference, new ChapterOneTask(SecondTaskReference, SecondTaskTitle, SecondTaskInstructions, SecondAnswer, null, [SecondLockedDocument])),
+    ];
+
     public static readonly ChapterOneDocument[] Documents =
     [
         new(
@@ -49,7 +65,7 @@ public static class ChapterOneCatalog
             "Note",
             "BOTH",
             true,
-            "WEDDINGBANK\nPrivate Banking · Records Administration\n\nINTERNAL PROCESSING NOTE\n\nReference: RA-2026-1103-08\nDate: 03 November 2026\nSubject: Supporting documentation — allocation review\n\nThe supporting documentation relating to the restricted allocation has been reviewed against the current registry.\n\nThe registry indicates that the relevant documentation was received and registered on 29 October 2026.\n\nHowever, no corresponding document could be located in the electronic case file at the time of this review.\n\nThe receipt status therefore remains recorded as acknowledged — confirmation pending.\n\nFurther verification has been requested before the internal review can be concluded.\n\nDistribution: Account Services\nPrepared by: Records Administration\n\nInternal administrative record. Not intended for external distribution."),
+            "WEDDINGBANK\nPrivate Banking · Account Services\n\nINTERNAL PROCESSING NOTE\n\nReference: RA-2026-1103-08\nDate: 03 November 2026\nSubject: Supporting documentation — allocation review\n\nThe supporting documentation relating to the restricted allocation has been reviewed against the current registry.\n\nThe registry indicates that the relevant documentation was received and registered under its original entry.\n\nHowever, no corresponding document could be located in the electronic case file at the time of this review.\n\nThe receipt status therefore remains recorded as acknowledged — confirmation pending.\n\nFurther verification has been requested before the internal review can be concluded.\n\nDistribution: Account Services\n\nInternal administrative record. Not intended for external distribution."),
         new(
             "CH-I-DOC-004",
             "Registry Extract — Internal Reference",
@@ -63,7 +79,7 @@ public static class ChapterOneCatalog
             "Confirmation",
             "AMBER",
             true,
-            "WEDDINGBANK\nPrivate Banking · Records Administration\n\nDOCUMENT RECEIPT CONFIRMATION\n\nThe relevant supporting documentation was registered on 29 October 2026.\n\nThe original reference number was not transferred to the electronic case file.\n\nDistribution: Account Holder — Amber"),
+            "WEDDINGBANK\nPrivate Banking · Account Services\n\nDOCUMENT RECEIPT CONFIRMATION\n\nThe relevant supporting documentation was registered on 29 October 2026.\n\nThe original reference number was not transferred to the electronic case file.\n\nDistribution: Account Holder — Amber"),
         new(
             "CH-I-DOC-006",
             "October 2026 Closing Register",
@@ -78,5 +94,50 @@ public static class ChapterOneCatalog
             "BOTH",
             false,
             "WEDDINGBANK\nPrivate Banking · Records Administration\n\nREGISTRY RECORD\n\nReference: REG-1026-17\nSubject: Supporting Documentation\n\nThe original supporting record was transferred to departmental review on 30 October 2026.\n\nThe receiving department has not yet confirmed physical receipt.\n\nFurther verification remains pending.\n\nInternal administrative record."),
+        new(
+            "CH-I-DOC-008",
+            "Dispatch Control Extract",
+            "Extract",
+            "JUUL",
+            true,
+            "WEDDINGBANK\nPrivate Banking · Records Administration\n\nDISPATCH CONTROL EXTRACT\n\nThe transfer relating to the supporting documentation was included in dispatch batch TR-1030.\n\nThe batch contains several departmental movements.\n\nThe receiving department is not identified in this extract.\n\nDistribution: Account Holder — Juul"),
+        new(
+            "CH-I-DOC-009",
+            "Routing Classification Notice",
+            "Notice",
+            "AMBER",
+            true,
+            "WEDDINGBANK\nPrivate Banking · Records Administration\n\nROUTING CLASSIFICATION NOTICE\n\nThe supporting record was assigned routing category B before dispatch.\n\nThis classification identifies the processing route used for the transfer.\n\nIt does not independently identify the receiving department.\n\nDistribution: Account Holder — Amber"),
+        new(
+            "CH-I-DOC-010",
+            "Departmental Transfer Register",
+            "Register",
+            "BOTH",
+            true,
+            "WEDDINGBANK\nPrivate Banking · Records Administration\n\nDEPARTMENTAL TRANSFER REGISTER\n\nReference | Routing Category | Receiving Department | Subject\n\nTR-1030-A | A | Account Services | Account review\nTR-1030-B | B | Compliance | Supporting documentation\nTR-1030-C | C | Legal Affairs | Supporting documentation\nTR-1031-B | B | Records Administration | Correspondence\n\nInternal administrative record."),
+        new(
+            "CH-I-DOC-011",
+            "Compliance Intake Exception",
+            "Record",
+            "BOTH",
+            false,
+            "WEDDINGBANK\nPrivate Banking · Compliance\n\nCOMPLIANCE INTAKE EXCEPTION\n\nReference: CI-2026-1030-07\nSubject: Supporting Documentation\n\nThe transfer associated with reference TR-1030-B appears in the departmental intake register.\n\nThe item was recorded as electronically received.\n\nHowever, the original supporting record could not be located in the corresponding physical case file.\n\nThe intake entry therefore remains subject to verification.\n\nNo final receipt confirmation has been issued.\n\nInternal administrative record."),
     ];
 }
+
+public sealed record ChapterOneQuest(
+    string Reference,
+    string Title,
+    string Description,
+    string Instructions,
+    bool Published,
+    string? ReleasedAfterTask,
+    ChapterOneTask Task);
+
+public sealed record ChapterOneTask(
+    string Reference,
+    string Title,
+    string Instructions,
+    string AcceptedAnswer,
+    string? SuccessMessage,
+    string[] Unlocks);

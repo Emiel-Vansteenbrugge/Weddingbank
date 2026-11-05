@@ -351,6 +351,9 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
                         .HasMaxLength(40)
                         .HasColumnType("character varying(40)");
 
+                    b.Property<Guid?>("ReleasedByTaskId")
+                        .HasColumnType("uuid");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(16)
@@ -372,6 +375,8 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("Reference")
                         .IsUnique();
+
+                    b.HasIndex("ReleasedByTaskId");
 
                     b.ToTable("Quests", null, t =>
                         {
@@ -742,6 +747,11 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
                         .HasForeignKey("CaseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("WeddingBank.Domain.Game.QuestTask", null)
+                        .WithMany()
+                        .HasForeignKey("ReleasedByTaskId")
+                        .OnDelete(DeleteBehavior.Restrict);
                 });
 
             modelBuilder.Entity("WeddingBank.Domain.Game.QuestTask", b =>

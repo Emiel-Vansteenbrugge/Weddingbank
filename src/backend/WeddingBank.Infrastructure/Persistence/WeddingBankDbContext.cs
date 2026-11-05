@@ -227,6 +227,11 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
             entity.Property(quest => quest.Kind).HasMaxLength(8).IsRequired();
             entity.HasIndex(quest => quest.Reference).IsUnique();
             entity.HasIndex(quest => quest.DisplayOrder);
+            entity.HasIndex(quest => quest.ReleasedByTaskId);
+            entity.HasOne<QuestTask>()
+                .WithMany()
+                .HasForeignKey(quest => quest.ReleasedByTaskId)
+                .OnDelete(DeleteBehavior.Restrict);
             entity.HasOne<CaseFile>()
                 .WithMany()
                 .HasForeignKey(quest => quest.CaseId)

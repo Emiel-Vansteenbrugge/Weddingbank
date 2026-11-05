@@ -62,18 +62,40 @@ public sealed class ChapterOneInitializer(WeddingBankDbContext db, TimeProvider 
             EnsureDocument(file, ChapterOneCatalog.Documents[index], index, now, report);
         }
 
+        var tasks = new Dictionary<string, QuestTask>(StringComparer.Ordinal);
+        foreach (var spec in ChapterOneCatalog.Quests)
+        {
+            if (await EnsureQuestAsync(file, spec, tasks, now, report, cancellationToken) is false)
+            {
+                return Conflict(report, null);
+            }
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return report;
+    }
+
+    private async Task<bool> EnsureQuestAsync(
+        CaseFile file,
+        ChapterOneQuest spec,
+        Dictionary<string, QuestTask> tasks,
+        DateTimeOffset now,
+        ChapterOneReport report,
+        CancellationToken cancellationToken)
+    {
         var quest = await db.Quests
             .Include(item => item.Tasks)
             .ThenInclude(task => task.Answers)
             .Include(item => item.Tasks)
             .ThenInclude(task => task.Unlocks)
-            .SingleOrDefaultAsync(item => item.Reference == ChapterOneCatalog.QuestReference, cancellationToken);
+            .SingleOrDefaultAsync(item => item.Reference == spec.Reference, cancellationToken);
         if (quest is not null && quest.CaseId != file.Id)
         {
-            return Conflict(report, $"{ChapterOneCatalog.QuestReference} is attached to a different case.");
+            report.Conflicts.Add($"{spec.Reference} is attached to a different case.");
+            return false;
         }
 
-        var taskQuery = db.QuestTasks.Where(item => item.Reference == ChapterOneCatalog.TaskReference);
+        var taskQuery = db.QuestTasks.Where(item => item.Reference == spec.Task.Reference);
         if (quest is not null)
         {
             var questId = quest.Id;
@@ -82,60 +104,73 @@ public sealed class ChapterOneInitializer(WeddingBankDbContext db, TimeProvider 
 
         if (await taskQuery.AnyAsync(cancellationToken))
         {
-            return Conflict(report, $"{ChapterOneCatalog.TaskReference} already belongs to another quest.");
+            report.Conflicts.Add($"{spec.Task.Reference} already belongs to another quest.");
+            return false;
         }
 
         if (quest is null)
         {
-            var order = await db.Quests.Select(item => (int?)item.DisplayOrder).MaxAsync(cancellationToken) ?? -1;
-            quest = Quest.Open(Guid.CreateVersion7(), ChapterOneCatalog.QuestReference, ChapterOneCatalog.QuestTitle, ChapterOneCatalog.QuestDescription, ChapterOneCatalog.QuestInstructions, file.Id, Audiences.Both, QuestKinds.Main, order + 1, now);
+            var stored = await db.Quests.Select(item => (int?)item.DisplayOrder).MaxAsync(cancellationToken) ?? -1;
+            var pending = db.ChangeTracker.Entries<Quest>().Select(entry => entry.Entity.DisplayOrder).DefaultIfEmpty(-1).Max();
+            quest = Quest.Open(Guid.CreateVersion7(), spec.Reference, spec.Title, spec.Description, spec.Instructions, file.Id, Audiences.Both, QuestKinds.Main, Math.Max(stored, pending) + 1, now);
             db.Quests.Add(quest);
-            report.Lines.Add($"created quest {ChapterOneCatalog.QuestReference}");
+            report.Lines.Add($"created quest {spec.Reference}");
         }
-        else if (ChangedQuest(quest))
+        else if (ChangedQuest(quest, spec))
         {
-            quest.Revise(ChapterOneCatalog.QuestReference, ChapterOneCatalog.QuestTitle, ChapterOneCatalog.QuestDescription, ChapterOneCatalog.QuestInstructions, file.Id, Audiences.Both, QuestKinds.Main, now);
-            report.Lines.Add($"repaired quest {ChapterOneCatalog.QuestReference}");
+            quest.Revise(spec.Reference, spec.Title, spec.Description, spec.Instructions, file.Id, Audiences.Both, QuestKinds.Main, now);
+            report.Lines.Add($"repaired quest {spec.Reference}");
         }
         else
         {
-            report.Lines.Add($"unchanged quest {ChapterOneCatalog.QuestReference}");
+            report.Lines.Add($"unchanged quest {spec.Reference}");
         }
 
-        if (quest.Status != CaseStatuses.Published)
+        if (spec.Published && quest.Status != CaseStatuses.Published)
         {
             quest.SetStatus(CaseStatuses.Published, now);
-            report.Lines.Add($"published quest {ChapterOneCatalog.QuestReference}");
+            report.Lines.Add($"published quest {spec.Reference}");
         }
 
-        var task = quest.Tasks.SingleOrDefault(item => item.Reference == ChapterOneCatalog.TaskReference);
+        var task = quest.Tasks.SingleOrDefault(item => item.Reference == spec.Task.Reference);
         if (task is null)
         {
             var taskOrder = quest.Tasks.Count == 0 ? 0 : quest.Tasks.Max(item => item.DisplayOrder) + 1;
-            task = quest.AddTask(Guid.CreateVersion7(), ChapterOneCatalog.TaskReference, ChapterOneCatalog.TaskTitle, ChapterOneCatalog.TaskInstructions, TaskTypes.Text, ProgressScope.Shared, null, true, true, ChapterOneCatalog.SuccessMessage, taskOrder, now);
-            report.Lines.Add($"created task {ChapterOneCatalog.TaskReference}");
+            task = quest.AddTask(Guid.CreateVersion7(), spec.Task.Reference, spec.Task.Title, spec.Task.Instructions, TaskTypes.Text, ProgressScope.Shared, null, true, true, spec.Task.SuccessMessage, taskOrder, now);
+            report.Lines.Add($"created task {spec.Task.Reference}");
         }
-        else if (await RepairTaskAsync(quest, task, now, report, cancellationToken) is false)
+        else if (await RepairTaskAsync(quest, task, spec.Task, now, report, cancellationToken) is false)
         {
-            return Conflict(report, null);
+            return false;
         }
 
-        if (task.Status != TaskStatuses.Published)
+        if (spec.Published && task.Status != TaskStatuses.Published)
         {
             quest.SetTaskStatus(task.Id, TaskStatuses.Published, now);
-            report.Lines.Add($"published task {ChapterOneCatalog.TaskReference}");
+            report.Lines.Add($"published task {spec.Task.Reference}");
         }
 
-        var locked = file.Documents.Single(document => document.Reference == ChapterOneCatalog.LockedDocument);
-        EnsureAnswer(task, report);
-        EnsureUnlock(task, locked.Id, report);
-        if (await EnsureAssignmentAsync(task, now, report, cancellationToken) is false)
+        tasks[task.Reference] = task;
+        if (spec.ReleasedAfterTask is string prior)
         {
-            return Conflict(report, null);
+            var priorTask = tasks[prior];
+            if (quest.ReleasedByTaskId != priorTask.Id)
+            {
+                quest.HoldUntil(priorTask.Id, now);
+                report.Lines.Add($"held quest {spec.Reference} until {prior}");
+            }
+            else
+            {
+                report.Lines.Add($"unchanged release {spec.Reference}");
+            }
         }
 
-        await db.SaveChangesAsync(cancellationToken);
-        return report;
+        EnsureAnswer(task, spec.Task, report);
+        var unlocks = spec.Task.Unlocks
+            .Select(reference => (reference, file.Documents.Single(document => document.Reference == reference).Id))
+            .ToArray();
+        EnsureUnlocks(task, unlocks, report);
+        return await EnsureAssignmentAsync(task, now, report, cancellationToken);
     }
 
     private static void EnsureDocument(CaseFile file, ChapterOneDocument spec, int order, DateTimeOffset now, ChapterOneReport report)
@@ -164,53 +199,57 @@ public sealed class ChapterOneInitializer(WeddingBankDbContext db, TimeProvider 
         }
     }
 
-    private async Task<bool> RepairTaskAsync(Quest quest, QuestTask task, DateTimeOffset now, ChapterOneReport report, CancellationToken cancellationToken)
+    private async Task<bool> RepairTaskAsync(Quest quest, QuestTask task, ChapterOneTask spec, DateTimeOffset now, ChapterOneReport report, CancellationToken cancellationToken)
     {
         var assignment = await db.Assignments.SingleOrDefaultAsync(item => item.TaskId == task.Id, cancellationToken);
         var scopeChanged = task.Scope != ProgressScope.Shared || task.ParticipantLogin is not null;
         if (scopeChanged && assignment is not null && (assignment.Completed || await db.Submissions.AnyAsync(item => item.AssignmentId == assignment.Id, cancellationToken)))
         {
-            report.Conflicts.Add($"{ChapterOneCatalog.TaskReference} already has progress, so its shared assignment cannot be repaired.");
+            report.Conflicts.Add($"{spec.Reference} already has progress, so its shared assignment cannot be repaired.");
             return false;
         }
 
-        if (ChangedTask(task) || scopeChanged)
+        if (ChangedTask(task, spec) || scopeChanged)
         {
-            quest.ReviseTask(task.Id, ChapterOneCatalog.TaskReference, ChapterOneCatalog.TaskTitle, ChapterOneCatalog.TaskInstructions, TaskTypes.Text, ProgressScope.Shared, null, true, true, ChapterOneCatalog.SuccessMessage, now);
-            report.Lines.Add($"repaired task {ChapterOneCatalog.TaskReference}");
+            quest.ReviseTask(task.Id, spec.Reference, spec.Title, spec.Instructions, TaskTypes.Text, ProgressScope.Shared, null, true, true, spec.SuccessMessage, now);
+            report.Lines.Add($"repaired task {spec.Reference}");
         }
         else
         {
-            report.Lines.Add($"unchanged task {ChapterOneCatalog.TaskReference}");
+            report.Lines.Add($"unchanged task {spec.Reference}");
         }
 
         return true;
     }
 
-    private static void EnsureAnswer(QuestTask task, ChapterOneReport report)
+    private static void EnsureAnswer(QuestTask task, ChapterOneTask spec, ChapterOneReport report)
     {
         var answers = task.Answers.OrderBy(answer => answer.DisplayOrder).Select(answer => answer.Text).ToArray();
-        if (answers.Length == 1 && answers[0] == ChapterOneCatalog.AcceptedAnswer)
+        if (answers.Length == 1 && answers[0] == spec.AcceptedAnswer)
         {
-            report.Lines.Add($"unchanged answer {ChapterOneCatalog.TaskReference}");
+            report.Lines.Add($"unchanged answer {spec.Reference}");
             return;
         }
 
-        task.ReplaceAnswers([(Guid.CreateVersion7(), ChapterOneCatalog.AcceptedAnswer)]);
-        report.Lines.Add($"{(answers.Length == 0 ? "recorded" : "repaired")} answer {ChapterOneCatalog.TaskReference}");
+        task.ReplaceAnswers([(Guid.CreateVersion7(), spec.AcceptedAnswer)]);
+        report.Lines.Add($"{(answers.Length == 0 ? "recorded" : "repaired")} answer {spec.Reference}");
     }
 
-    private static void EnsureUnlock(QuestTask task, Guid documentId, ChapterOneReport report)
+    private static void EnsureUnlocks(QuestTask task, IReadOnlyList<(string Reference, Guid DocumentId)> wanted, ChapterOneReport report)
     {
-        if (task.Unlocks.Any(unlock => unlock.DocumentId == documentId))
+        var current = task.Unlocks.Select(unlock => unlock.DocumentId).ToHashSet();
+        var wantedIds = wanted.Select(item => item.DocumentId).ToHashSet();
+        if (!current.SetEquals(wantedIds))
         {
-            report.Lines.Add($"unchanged unlock {ChapterOneCatalog.LockedDocument}");
-            return;
+            var kept = task.Unlocks.Where(unlock => wantedIds.Contains(unlock.DocumentId)).Select(unlock => (unlock.Id, unlock.DocumentId));
+            var added = wanted.Where(item => !current.Contains(item.DocumentId)).Select(item => (Guid.CreateVersion7(), item.DocumentId));
+            task.ReplaceUnlocks(kept.Concat(added).ToArray());
         }
 
-        var unlocks = task.Unlocks.Select(unlock => (unlock.Id, unlock.DocumentId)).Append((Guid.CreateVersion7(), documentId)).ToArray();
-        task.ReplaceUnlocks(unlocks);
-        report.Lines.Add($"linked unlock {ChapterOneCatalog.LockedDocument}");
+        foreach (var item in wanted)
+        {
+            report.Lines.Add($"{(current.Contains(item.DocumentId) ? "unchanged" : "linked")} unlock {item.Reference}");
+        }
     }
 
     private async Task<bool> EnsureAssignmentAsync(QuestTask task, DateTimeOffset now, ChapterOneReport report, CancellationToken cancellationToken)
@@ -219,7 +258,7 @@ public sealed class ChapterOneInitializer(WeddingBankDbContext db, TimeProvider 
         if (assignment is null)
         {
             db.Assignments.Add(Assignment.ForTheHouse(Guid.CreateVersion7(), task.Reference, now, task.Id));
-            report.Lines.Add($"created shared assignment {ChapterOneCatalog.TaskReference}");
+            report.Lines.Add($"created shared assignment {task.Reference}");
             return true;
         }
 
@@ -227,26 +266,26 @@ public sealed class ChapterOneInitializer(WeddingBankDbContext db, TimeProvider 
         {
             if (assignment.Completed || await db.Submissions.AnyAsync(item => item.AssignmentId == assignment.Id, cancellationToken))
             {
-                report.Conflicts.Add($"{ChapterOneCatalog.TaskReference} already has progress, so its shared assignment cannot be repaired.");
+                report.Conflicts.Add($"{task.Reference} already has progress, so its shared assignment cannot be repaired.");
                 return false;
             }
 
             db.Assignments.Remove(assignment);
             db.Assignments.Add(Assignment.ForTheHouse(Guid.CreateVersion7(), task.Reference, now, task.Id));
-            report.Lines.Add($"repaired shared assignment {ChapterOneCatalog.TaskReference}");
+            report.Lines.Add($"repaired shared assignment {task.Reference}");
             return true;
         }
 
         if (!string.Equals(assignment.Code, task.Reference, StringComparison.Ordinal))
         {
             assignment.Rename(task.Reference, now);
-            report.Lines.Add($"repaired shared assignment {ChapterOneCatalog.TaskReference}");
+            report.Lines.Add($"repaired shared assignment {task.Reference}");
         }
         else
         {
             report.Lines.Add(assignment.Completed
-                ? $"kept completed assignment {ChapterOneCatalog.TaskReference}"
-                : $"unchanged shared assignment {ChapterOneCatalog.TaskReference}");
+                ? $"kept completed assignment {task.Reference}"
+                : $"unchanged shared assignment {task.Reference}");
         }
 
         return true;
@@ -260,23 +299,23 @@ public sealed class ChapterOneInitializer(WeddingBankDbContext db, TimeProvider 
             || file.Audience != Audiences.Both;
     }
 
-    private static bool ChangedQuest(Quest quest)
+    private static bool ChangedQuest(Quest quest, ChapterOneQuest spec)
     {
-        return quest.Title != ChapterOneCatalog.QuestTitle
-            || quest.Description != ChapterOneCatalog.QuestDescription
-            || quest.Instructions != ChapterOneCatalog.QuestInstructions
+        return quest.Title != spec.Title
+            || quest.Description != spec.Description
+            || quest.Instructions != spec.Instructions
             || quest.Audience != Audiences.Both
             || quest.Kind != QuestKinds.Main;
     }
 
-    private static bool ChangedTask(QuestTask task)
+    private static bool ChangedTask(QuestTask task, ChapterOneTask spec)
     {
-        return task.Title != ChapterOneCatalog.TaskTitle
-            || task.Instructions != ChapterOneCatalog.TaskInstructions
+        return task.Title != spec.Title
+            || task.Instructions != spec.Instructions
             || task.TaskType != TaskTypes.Text
             || !task.IgnoreCase
             || !task.TrimWhitespace
-            || task.SuccessMessage != ChapterOneCatalog.SuccessMessage;
+            || task.SuccessMessage != spec.SuccessMessage;
     }
 
     private ChapterOneReport Conflict(ChapterOneReport report, string? conflict)

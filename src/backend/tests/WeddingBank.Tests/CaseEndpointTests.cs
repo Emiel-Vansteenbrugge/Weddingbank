@@ -10,6 +10,7 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using WeddingBank.Application.Identity;
 using WeddingBank.Domain.Game;
 using WeddingBank.Domain.Identity;
+using WeddingBank.Infrastructure.Game;
 using WeddingBank.Infrastructure.Identity;
 using WeddingBank.Infrastructure.Persistence;
 
@@ -252,6 +253,16 @@ public sealed class CaseApiFixture : IDisposable
 
         using var scope = _factory.Services.CreateScope();
         scope.ServiceProvider.GetRequiredService<WeddingBankDbContext>().Database.EnsureCreated();
+    }
+
+    public async Task InitializeChapterOneAsync()
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var report = await scope.ServiceProvider.GetRequiredService<ChapterOneInitializer>().EnsureAsync();
+        if (report.Conflicts.Count > 0)
+        {
+            throw new InvalidOperationException(string.Join(' ', report.Conflicts));
+        }
     }
 
     public async Task<HttpClient> SignInAsync(string login, string password)

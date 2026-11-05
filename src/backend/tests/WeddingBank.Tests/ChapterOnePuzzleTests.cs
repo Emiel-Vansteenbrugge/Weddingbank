@@ -113,12 +113,37 @@ public sealed class ChapterOnePuzzleTests
         Assert.Equal(2, await db.Assignments.CountAsync(item => item.Completed));
         Assert.Equal(4, await db.Submissions.CountAsync());
 
+        var assignmentIds = await db.Assignments.Select(item => item.Id).ToArrayAsync();
+        var submissionIds = await db.Submissions.Select(item => item.Id).ToArrayAsync();
         var again = await new ChapterOneInitializer(db, new FixedTime(now.AddHours(1))).EnsureAsync();
         Assert.Empty(again.Conflicts);
+        Assert.DoesNotContain(again.Lines, line => line.StartsWith("created ", StringComparison.Ordinal));
         Assert.Equal(2, await db.Assignments.CountAsync(item => item.Completed));
-        Assert.Equal(4, await db.Submissions.CountAsync());
+        Assert.Equal(assignmentIds.Order().ToArray(), (await db.Assignments.Select(item => item.Id).ToArrayAsync()).Order().ToArray());
+        Assert.Equal(submissionIds.Order().ToArray(), (await db.Submissions.Select(item => item.Id).ToArrayAsync()).Order().ToArray());
+        Assert.Equal(2, await db.Submissions.CountAsync(item => item.Outcome == "REFUSED"));
+        Assert.Equal(2, await db.Submissions.CountAsync(item => item.Outcome == "ACCEPTED"));
         Assert.Equal(2, await db.Quests.CountAsync());
+        Assert.Equal(2, await db.QuestTasks.CountAsync());
         Assert.Equal(11, await db.CaseDocuments.CountAsync());
+        foreach (var spec in ChapterOneCatalog.Documents)
+        {
+            var document = await db.CaseDocuments.SingleAsync(item => item.Reference == spec.Reference);
+            Assert.Equal(spec.Content, document.Content);
+            Assert.Equal(spec.Audience, document.Audience);
+            Assert.Equal(spec.Published ? DocumentStatuses.Published : DocumentStatuses.Draft, document.Status);
+        }
+
+        var unlocks = await db.DocumentUnlocks
+            .Join(db.QuestTasks, unlock => unlock.TaskId, task => task.Id, (unlock, task) => new { Task = task.Reference, unlock.DocumentId })
+            .Join(db.CaseDocuments, row => row.DocumentId, document => document.Id, (row, document) => new { row.Task, Document = document.Reference })
+            .ToListAsync();
+        Assert.Equal(
+            ["CH-I-DOC-007", "CH-I-DOC-008", "CH-I-DOC-009", "CH-I-DOC-010"],
+            unlocks.Where(item => item.Task == "CH-I-TASK-001").Select(item => item.Document).Order().ToArray());
+        Assert.Equal(["CH-I-DOC-011"], unlocks.Where(item => item.Task == "CH-I-TASK-002").Select(item => item.Document).ToArray());
+        var firstTask = await db.QuestTasks.SingleAsync(item => item.Reference == "CH-I-TASK-001");
+        Assert.Equal(firstTask.Id, (await db.Quests.SingleAsync(item => item.Reference == "CH-I-QUEST-002")).ReleasedByTaskId);
     }
 
     private static async Task<string[]> VisiblePapers(CaseService papers, string login)

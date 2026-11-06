@@ -33,21 +33,28 @@ export function ParticipantQuests() {
     <>
       <p className="eyebrow">Tasks</p>
       <h1>Tasks</h1>
-      {quests.length === 0 ? <p className="section-note">Nothing is waiting for you.</p> : (
-        <div className="empty-list">
-          {quests.map((item) => (
-            <section key={item.id}>
-              <p className="status-mark">{item.reference}</p>
-              <h2>
-                <SiteLink href={`/client/tasks/${item.id}`} className="text-link">{item.title}</SiteLink>
-              </h2>
-              <p>{item.description}</p>
-              <p className="section-note">{item.completedTasks} completed, {item.openTasks} open</p>
-            </section>
-          ))}
-        </div>
-      )}
+      <ParticipantQuestList quests={quests} />
     </>
+  )
+}
+
+export function ParticipantQuestList({ quests }: { quests: ReadingQuestSummary[] }) {
+  const open = quests.filter((item) => item.openTasks > 0)
+  if (open.length === 0) return <p className="section-note">Nothing is waiting for you.</p>
+
+  return (
+    <div className="task-stack">
+      {open.map((item) => (
+        <section key={item.id}>
+          <p className="status-mark">{item.reference}</p>
+          <h2>
+            <SiteLink href={`/client/tasks/${item.id}`} className="text-link">{item.title}</SiteLink>
+          </h2>
+          <p>{item.description}</p>
+          <p className="section-note">{item.completedTasks} completed, {item.openTasks} open</p>
+        </section>
+      ))}
+    </div>
   )
 }
 
@@ -118,17 +125,21 @@ export function QuestReading({
       ) : null}
       <p className="section-note">Shared progress: {quest.sharedCompleted} completed, {quest.sharedOpen} open.</p>
       {error ? <p className="form-status" role="alert">{error}</p> : null}
-      <div className="empty-list">
-        {quest.tasks.map((task) => (
+      {quest.tasks.filter((task) => task.completed).map((task) => {
+        const note = notices[task.id] || task.successMessage
+        return note ? <p key={task.id} role="status">{note}</p> : null
+      })}
+      {quest.tasks.some((task) => !task.completed) ? (
+      <div className="task-stack">
+        {quest.tasks.filter((task) => !task.completed).map((task) => (
           <section key={task.id}>
             <p className="status-mark">{task.reference}</p>
             <h2>{task.title}</h2>
             <p className="paper">{task.instructions}</p>
             {task.shared ? <p className="section-note">Held for both account holders.</p> : null}
-            <p className="section-note">{task.completed ? 'Completed' : 'Open'}</p>
-            {task.completed && task.successMessage ? <p>{task.successMessage}</p> : null}
+            <p className="section-note">Open</p>
             {notices[task.id] ? <p role="status">{notices[task.id]}</p> : null}
-            {!task.completed && onSubmit ? (
+            {onSubmit ? (
               <form
                 className="enquiry"
                 onSubmit={(event: FormEvent<HTMLFormElement>) => {
@@ -148,6 +159,7 @@ export function QuestReading({
           </section>
         ))}
       </div>
+      ) : null}
     </>
   )
 }

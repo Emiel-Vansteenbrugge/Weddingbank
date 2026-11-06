@@ -795,7 +795,23 @@ a { color: inherit; }
 }
 
 .empty-list p,
+.task-stack p,
 .record p { margin-top: 0.45rem; color: var(--muted); }
+
+.task-stack {
+  display: flex;
+  flex-direction: column;
+  max-width: 40rem;
+  margin-top: 3rem;
+  border-top: 1px solid var(--line);
+}
+
+.task-stack section {
+  padding: 1.5rem 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.task-stack section h2 { font-size: 1.7rem; }
 
 .record { max-width: 36rem; margin-top: 2rem; }
 
@@ -823,6 +839,45 @@ a { color: inherit; }
   white-space: pre-wrap;
   line-height: 1.7;
 }
+
+.register {
+  max-width: 46rem;
+  margin-top: 2.2rem;
+  overflow-x: auto;
+}
+
+.register table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.register th {
+  padding: 0 1.4rem 0.7rem 0;
+  border-bottom: 1px solid var(--gold);
+  font-size: 0.68rem;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-align: left;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.register td {
+  padding: 0.95rem 1.4rem 0.95rem 0;
+  border-bottom: 1px solid var(--line);
+  vertical-align: baseline;
+}
+
+.register td:first-child {
+  font-family: var(--serif);
+  font-size: 1.2rem;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.register tr:last-child td { border-bottom-color: transparent; }
 
 .row-actions {
   display: flex;

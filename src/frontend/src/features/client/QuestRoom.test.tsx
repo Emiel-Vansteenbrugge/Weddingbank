@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { expect, test } from 'vitest'
 import { QuestCatalogue, SubmissionTable } from '../admin/QuestDesk.tsx'
-import { QuestReading } from './QuestRoom.tsx'
+import { ParticipantQuestList, QuestReading } from './QuestRoom.tsx'
 
 const quest = {
   id: '33333333-3333-3333-3333-333333333333',
@@ -39,7 +39,7 @@ test('a participant quest shows the task and an answer field without the accepte
   expect(html).not.toContain('SIDE')
 })
 
-test('a completed shared task shows the confirmation and no further answer field', () => {
+test('a completed shared task leaves only the confirmation', () => {
   const html = renderToStaticMarkup(
     <QuestReading
       quest={{
@@ -57,9 +57,37 @@ test('a completed shared task shows the confirmation and no further answer field
     />,
   )
   expect(html).toContain('The registry entry has been identified.')
-  expect(html).toContain('Completed')
+  expect(html).not.toContain('Identify the Registry Entry')
   expect(html).not.toContain('name="answer"')
   expect(html).not.toContain('REG-1026-17')
+})
+
+test('finished quests leave the task list and the rest stacks in one column', () => {
+  const html = renderToStaticMarkup(
+    <ParticipantQuestList
+      quests={[
+        {
+          id: '33333333-3333-3333-3333-333333333333',
+          reference: 'CH-I-QUEST-001',
+          title: 'The Missing Record',
+          description: 'An inconsistency has been identified.',
+          openTasks: 0,
+          completedTasks: 1,
+        },
+        {
+          id: '66666666-6666-6666-6666-666666666666',
+          reference: 'CH-I-QUEST-002',
+          title: 'The Unconfirmed Transfer',
+          description: 'The supporting record was transferred.',
+          openTasks: 1,
+          completedTasks: 0,
+        },
+      ]}
+    />,
+  )
+  expect(html).toContain('class="task-stack"')
+  expect(html).not.toContain('The Missing Record')
+  expect(html).toContain('The Unconfirmed Transfer')
 })
 
 test('the quest desk shows scope, status and separate progress', () => {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { SiteLink } from '../../shared/SiteLink.tsx'
+import { PaperBody } from './PaperBody.tsx'
 import {
   fetchPaper,
   fetchPapers,
@@ -168,7 +169,7 @@ export function ParticipantDocument({ documentId }: { documentId: string }) {
         </SiteLink>
       </p>
       {paper.description ? <p className="section-note">{paper.description}</p> : null}
-      <p className="paper">{paper.content}</p>
+      <PaperBody content={paper.content} />
     </>
   )
 }

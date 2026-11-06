@@ -65,7 +65,7 @@ public sealed class EfGameStore(WeddingBankDbContext db) : IGameStore
             .ToListAsync(cancellationToken);
         var assignments = rows.Select(row => row.assignment).ToArray();
         var visible = rows
-            .Where(row => row.quest.IsOpenTo(login) && row.quest.IsReleased(assignments, login) && row.file.IsOpenTo(login) && row.task.IsVisibleTo(login, row.assignment))
+            .Where(row => row.quest.Kind == QuestKinds.Main && row.quest.IsOpenTo(login) && row.quest.IsReleased(assignments, login) && row.file.IsOpenTo(login) && row.task.IsVisibleTo(login, row.assignment))
             .Select(row => row.assignment)
             .ToArray();
         return new VisibleProgress(

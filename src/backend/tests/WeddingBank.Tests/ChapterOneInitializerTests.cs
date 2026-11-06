@@ -36,8 +36,8 @@ public sealed class ChapterOneInitializerTests
         await using (var db = new WeddingBankDbContext(options))
         {
             Assert.Equal(1, await db.CaseFiles.CountAsync(file => file.Reference == "CH-I-001"));
-            Assert.Equal(11, await db.CaseDocuments.CountAsync());
-            Assert.Equal(9, await db.CaseDocuments.CountAsync(document => document.Status == DocumentStatuses.Published));
+            Assert.Equal(23, await db.CaseDocuments.CountAsync());
+            Assert.Equal(18, await db.CaseDocuments.CountAsync(document => document.Status == DocumentStatuses.Published));
             var locked = await db.CaseDocuments.SingleAsync(document => document.Reference == "CH-I-DOC-007");
             Assert.Equal(DocumentStatuses.Draft, locked.Status);
             Assert.Equal(DocumentStatuses.Draft, (await db.CaseDocuments.SingleAsync(document => document.Reference == "CH-I-DOC-011")).Status);
@@ -63,7 +63,7 @@ public sealed class ChapterOneInitializerTests
             submissionId = Guid.CreateVersion7();
             db.Submissions.Add(Submission.Decide(submissionId, assignment.Id, Participants.Juul, "REG-1026-14", false, now));
             task.ReplaceAnswers([(Guid.CreateVersion7(), "WRONG")]);
-            var file = await db.CaseFiles.Include(item => item.Documents).SingleAsync();
+            var file = await db.CaseFiles.Include(item => item.Documents).SingleAsync(item => item.Reference == "CH-I-001");
             file.SetDocumentStatus(locked.Id, DocumentStatuses.Published, now);
             await db.SaveChangesAsync();
             caseId = file.Id;
@@ -85,15 +85,17 @@ public sealed class ChapterOneInitializerTests
 
         await using (var db = new WeddingBankDbContext(options))
         {
-            Assert.Equal(caseId, (await db.CaseFiles.SingleAsync()).Id);
+            Assert.Equal(caseId, (await db.CaseFiles.SingleAsync(item => item.Reference == "CH-I-001")).Id);
             Assert.Equal(questId, (await db.Quests.SingleAsync(item => item.Reference == "CH-I-QUEST-001")).Id);
-            Assert.Equal(2, await db.Quests.CountAsync());
-            Assert.Equal(2, await db.QuestTasks.CountAsync());
-            Assert.Equal(2, await db.Assignments.CountAsync());
-            Assert.Equal(5, await db.DocumentUnlocks.CountAsync());
+            Assert.Equal(5, await db.Quests.CountAsync());
+            Assert.Equal(5, await db.QuestTasks.CountAsync());
+            Assert.Equal(5, await db.Assignments.CountAsync());
+            Assert.Equal(11, await db.DocumentUnlocks.CountAsync());
             var assignment = await db.Assignments.SingleAsync(item => item.Id == assignmentId);
             Assert.True(assignment.Completed);
-            Assert.True((await db.Assignments.SingleAsync(item => item.Id != assignmentId)).Completed);
+            var secondTaskId = (await db.QuestTasks.SingleAsync(item => item.Reference == "CH-I-TASK-002")).Id;
+            Assert.True((await db.Assignments.SingleAsync(item => item.TaskId == secondTaskId)).Completed);
+            Assert.Equal(2, await db.Assignments.CountAsync(item => item.Completed));
             Assert.Equal(submissionId, (await db.Submissions.SingleAsync()).Id);
             var taskId = (await db.QuestTasks.SingleAsync(item => item.Reference == "CH-I-TASK-001")).Id;
             var answer = await db.TaskAnswers.SingleAsync(item => item.TaskId == taskId);

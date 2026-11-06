@@ -23,8 +23,10 @@ The played story, as far as it exists, is Chapter I, “The Account”.
 3. Solving that shared task releases the registry record. It says the original supporting record was transferred to departmental review on 30 October 2026, and that the receiving department has not confirmed physical receipt.
 4. The second quest continues that sentence. Juul alone learns the dispatch batch, `TR-1030`. Amber alone learns the routing category, `B`. The Departmental Transfer Register then identifies `TR-1030-B`, received by Compliance.
 5. Solving that shared task releases a Compliance intake exception: the transfer was recorded electronically, but the original paper is not in the physical file, and no final receipt has been issued.
+6. The third quest asks for the confirmation status. Juul alone has the intake handling, interim logging. Amber alone has the inspection verification, exception without exhibit. Each of those marks appears on two rows of the receipt procedure. Only both marks select `ELECTRONIC RECEIPT ONLY`. Document 011 does not use those marks, and its wording is not one of the status names. `ELECTRONIC RECEIPT PENDING` is the other reading of an electronic intake.
+7. Solving that shared task releases the preliminary review finding. It closes Chapter I’s account review as far as the known facts go. It does not open Chapter II.
 
-No chapter after this is written. No side quest is written. No hint text is written.
+Two optional matters are available from the start and are not required for any of the three main tasks. One is the closed 2019 relationship file `ARCHIVE-2019-047`. The other is an apparent hold that is a reversed custody fee. No separate hint channel is built. Chapter II is not built, and nothing in Chapter I opens it.
 
 ## 2. Complete chapter progression
 
@@ -34,10 +36,16 @@ No chapter after this is written. No side quest is written. No hint text is writ
 | Quest 1 | `CH-I-QUEST-001` | The Missing Record | Published. In the initializer. | One shared task. |
 | Task 1 | `CH-I-TASK-001` | Identify the Registry Entry | Published. In the initializer. | Accepts `REG-1026-17` and releases documents 007, 008, 009, and 010, plus quest 2. |
 | Quest 2 | `CH-I-QUEST-002` | The Unconfirmed Transfer | Published, held until task 1 is complete. In the initializer. | One shared task. |
-| Task 2 | `CH-I-TASK-002` | Identify the Receiving Department | Published, held with its quest. In the initializer. | Accepts `Compliance` and releases `CH-I-DOC-011`. |
-| Chapter II | — | — | Not built. | No case, quest, document, or ending exists. |
+| Task 2 | `CH-I-TASK-002` | Identify the Receiving Department | Published, held with its quest. In the initializer. | Accepts `Compliance` and releases `CH-I-DOC-011`, plus the three papers for quest 3. |
+| Quest 3 | `CH-I-QUEST-003` | The Missing Confirmation | Published, held until task 2 is complete. In the initializer. | One shared task. Main quest. |
+| Task 3 | `CH-I-TASK-003` | Identify the Confirmation Status | Published, held with its quest. In the initializer. | Accepts `ELECTRONIC RECEIPT ONLY` and releases `CH-I-DOC-015`. |
+| Optional file | `ARCHIVE-2019-047` | Former Relationship File | Published. In the initializer. | Not required for the main tasks. |
+| Optional quest | `CH-I-QUEST-004` | The Closed File | Published from the start. Side quest. | Accepts `CL-19` and releases `ARCH-2019-004`. |
+| Optional file | `FILE-2026-088` | Apparent Hold | Published. In the initializer. | Not required for the main tasks. |
+| Optional quest | `CH-I-QUEST-005` | The Apparent Hold | Published from the start. Side quest. | Accepts `E-88-R` and releases `FILE-2026-004`. |
+| Chapter II | — | — | Not built. | No case, quest, document, or opening rule exists. |
 
-Both quests are main quests. Both tasks are shared. There is no individual task.
+The three numbered quests are main quests. The two optional quests are side quests. Participants never see the words main or side. The administrator quest list does. Every Chapter I task is shared. There is no individual task. A side quest cannot release a main quest, a main document, or Chapter II. Only an administrator can add a later chapter, and no such chapter is in the initializer.
 
 ## 3. Initial state of each participant account
 
@@ -47,7 +55,7 @@ Both quests are main quests. Both tasks are shared. There is no individual task.
 | Name shown in the house | Juul | Amber |
 | Role | Client | Client |
 | Individual tasks | None | None |
-| Shared work at a fresh start | Quest 1 is open. Quest 2 is published but hidden until quest 1 is solved. | The same shared assignment. |
+| Shared work at a fresh start | Quest 1 is open. Quests 2 and 3 are published but hidden until the previous main task is solved. The two optional quests are also open and are not part of this count. | The same shared assignments. |
 | Accounts page | Title “Private account”. Note “Nothing has been posted.” The EUR 250.00 figure is not on this page. It is only in `CH-I-DOC-001`. | Same, with Amber’s name. |
 | Correspondence page | Fixed sentence: “The house has not written.” This page is not connected to hints. | Same. |
 | Archive | Fixed sentence: “The archive has not been opened.” | Same. |
@@ -78,7 +86,7 @@ A document is visible when all of these are true:
 - The document is published, or it has an unlock rule.
 - It is not still locked. A document with an unlock rule stays hidden until a completed assignment for that participant covers the linked task.
 
-`CH-I-DOC-007` and `CH-I-DOC-011` stay drafts on purpose. The unlock releases them. Publishing them is not required. While the linked task is unfinished, they stay hidden even if someone publishes them, because the lock still applies.
+`CH-I-DOC-007`, `CH-I-DOC-011`, and `CH-I-DOC-015` stay drafts on purpose, as do the two optional reward notes `ARCH-2019-004` and `FILE-2026-004`. The unlock releases them. Publishing them is not required. While the linked task is unfinished, they stay hidden even if someone publishes them, because the lock still applies.
 
 `CH-I-DOC-008`, `CH-I-DOC-009`, and `CH-I-DOC-010` are published, and they carry the same kind of lock from `CH-I-TASK-001`. They stay hidden until that task is complete. Quest 2 is published as well, and it names task 1 as the task that releases it. Until then, the quest and its task are absent from the participant desk, and a direct request returns the same “not available” result as a missing quest.
 
@@ -340,6 +348,90 @@ No final receipt confirmation has been issued.
 Internal administrative record.
 ```
 
+#### CH-I-DOC-012 — Electronic Intake Extract
+
+- Audience: Juul only.
+- Category: Extract.
+- State: published, held by task 2 until quest 3 opens.
+- What it contributes: intake handling `Interim logging`. It does not record the inspection verification or a confirmation status.
+
+#### CH-I-DOC-013 — Physical File Inspection
+
+- Audience: Amber only.
+- Category: Note.
+- State: published, held by task 2 until quest 3 opens.
+- What it contributes: inspection verification `Exception without exhibit`. It does not record the intake handling or a confirmation status.
+
+#### CH-I-DOC-014 — Receipt Registration Procedure
+
+- Audience: both.
+- Category: Register.
+- State: published, held by task 2 until quest 3 opens.
+- What it contributes: four rows. It says an intake exception does not itself determine the status. It does not say which handling or verification applies.
+
+| Confirmation status | Intake handling | Inspection verification |
+| --- | --- | --- |
+| `ELECTRONIC RECEIPT ONLY` | Interim logging | Exception without exhibit |
+| `ELECTRONIC RECEIPT PENDING` | Interim logging | Exhibit confirmed |
+| `ADMINISTRATIVE RECEIPT OPEN` | Final logging | Exhibit confirmed |
+| `ADMINISTRATIVE RECEIPT OPEN` | Final logging | Exception without exhibit |
+
+#### CH-I-DOC-015 — Preliminary Review Finding
+
+- Audience: both.
+- Category: Record.
+- State: draft. Task 3 releases it.
+- Reference: `PR-2026-1106-01`. Date: 06 November 2026.
+- It states that the electronic registration exists, the physical receipt is not proved, the original document’s whereabouts remain unknown, the available information does not establish fraud or intentional removal, the internal review remains open, and the EUR 250.00 remains unavailable. It does not close the wider story and does not mention Chapter II.
+
+### Optional file — ARCHIVE-2019-047 — Former Relationship File
+
+This file did not previously exist as a narrative case. The reference was only an example in validation text. The initializer now creates one case with this reference. It is not a second copy.
+
+- Summary: a closed relationship file retains contradictory departmental records. The former client's identity is incomplete.
+- Available from the start. Not used by any main task.
+
+| Document | Audience | When | Contribution |
+| --- | --- | --- | --- |
+| `ARCH-2019-001` Client Records Extract | Juul | Published immediately | Closure was entered by Client Records. The identity line reads “removed”. No date and no code. |
+| `ARCH-2019-002` Compliance Review Note | Amber | Published immediately | Review dated 12 March 2019 was incomplete. Compliance did not recommend closure. The closure entry, if made, is dated 14 March 2019. No department and no code. |
+| `ARCH-2019-003` March 2019 Closure Register | Both | Published immediately | Four rows. Client Records appears twice, and 14 March 2019 appears twice. |
+| `ARCH-2019-004` Archive Retention Note | Both | Draft, released by task 4 | Explains `CL-19`, the incomplete checks, and that the former client’s name is still missing. |
+
+Closure register:
+
+| Date | Department | Code |
+| --- | --- | --- |
+| 14/03/2019 | Client Records | `CL-19` |
+| 28/03/2019 | Client Records | `CL-21` |
+| 14/03/2019 | Legal Affairs | `CL-20` |
+| 02/04/2019 | Account Services | `CL-18` |
+
+### Optional file — FILE-2026-088 — Apparent Hold
+
+No separate suspicious dossier existed. The earlier red herrings are rows inside documents 006 and 010, and those rows are unchanged. This is a new optional file.
+
+- Summary: a posting of EUR 250.00 was briefly presented as a hold. The fee ledger records a separate explanation.
+- It is not the restricted allocation and is not evidence for a main task.
+
+| Document | Audience | When | Contribution |
+| --- | --- | --- | --- |
+| `FILE-2026-001` Hold Appearance Extract | Juul | Published immediately | The original booking reference is `E-88`. The extract does not mention a correction or a reversal. |
+| `FILE-2026-002` Correction Practice Note | Amber | Published immediately | The correcting entry is the original booking reference followed by `-R`, not the open posting. She is not told the reference. |
+| `FILE-2026-003` Fee Ledger — November 2026 | Both | Published immediately | Two open custody fees and two custody reversals, plus an advisory pair. |
+| `FILE-2026-004` Posting Correction Note | Both | Draft, released by task 5 | `E-88` was a duplicate custody fee, reversed the same day. No restriction. Not an allocation. The matter is closed. |
+
+Fee ledger:
+
+| Entry | Description | Amount | Position |
+| --- | --- | --- | --- |
+| `E-14` | Advisory fee | EUR 80.00 | Open |
+| `E-88` | Custody fee | EUR 250.00 | Open |
+| `E-91` | Custody fee | EUR 250.00 | Open |
+| `E-14-R` | Advisory fee | EUR 80.00 | Reversal |
+| `E-88-R` | Custody fee | EUR 250.00 | Reversal |
+| `E-91-R` | Custody fee | EUR 250.00 | Reversal |
+
 ### Notifications, correspondence, and other channels
 
 | Item | State |
@@ -448,6 +540,63 @@ Step-by-step solution:
 
 Hints: none written. Reveal order: not defined.
 
+### CH-I-QUEST-003 — The Missing Confirmation
+
+- Kind: main. Participants do not see that label.
+- Audience: both.
+- State: published, held until `CH-I-TASK-002` is complete.
+- Case: `CH-I-001`.
+- Description: “The confirmation status for the supporting documentation has not been copied onto the case summary.” It does not mention interim logging, an exhibit, or the answer.
+- Instructions: use the personal intake records and the Receipt Registration Procedure, and submit the confirmation status.
+
+#### CH-I-TASK-003 — Identify the Confirmation Status
+
+- Scope: shared. One assignment for both.
+- Accepted answer: `ELECTRONIC RECEIPT ONLY`
+- Success message: “The confirmation status has been recorded. The preliminary finding is now available for examination.”
+- Unlock: `CH-I-DOC-015` only. No later chapter.
+
+Why neither person can solve it alone:
+
+1. Juul has only `Interim logging`. That handling is on two rows: `ELECTRONIC RECEIPT ONLY` and `ELECTRONIC RECEIPT PENDING`.
+2. Amber has only `Exception without exhibit`. That verification is on two rows: `ELECTRONIC RECEIPT ONLY` and `ADMINISTRATIVE RECEIPT OPEN`.
+3. The only row with both marks is `ELECTRONIC RECEIPT ONLY`.
+4. Document 011 says the item was electronically received, that the physical file could not be located, and that no final receipt confirmation has been issued. None of those sentences is a status name. “Electronically received” fits both `ELECTRONIC RECEIPT ONLY` and `ELECTRONIC RECEIPT PENDING`. The procedure says an intake exception does not itself determine the status.
+5. Submit `ELECTRONIC RECEIPT ONLY`. `ELECTRONIC RECEIPT PENDING` and `ADMINISTRATIVE RECEIPT OPEN` are refused.
+6. `CH-I-DOC-015` opens for both. Chapter II does not appear.
+
+### CH-I-QUEST-004 — The Closed File
+
+- Kind: side. Optional. Visible from the start, beside quest 1, and it stays available if it is left unsolved.
+- Case: `ARCHIVE-2019-047`, not the account case.
+- Accepted answer: `CL-19`
+- Success message: “The closure entry has been identified. The retention note is now available for examination.”
+- Reward: `ARCH-2019-004`. It explains that `CL-19` is an administrative closure that does not require completed checks, that Compliance had already marked the review incomplete, and that the former client’s name is still missing. It does not say who the client was.
+
+Solution:
+
+1. Juul contributes the department: Client Records. That department has two codes, `CL-19` on 14 March and `CL-21` on 28 March.
+2. Amber contributes the closure date: 14 March 2019. That date has two codes, `CL-19` for Client Records and `CL-20` for Legal Affairs.
+3. The only row with both Client Records and 14/03/2019 is `CL-19`.
+4. `CL-20` and `CL-21` are refused. The reward explains the code afterwards. It is not visible before the answer is accepted.
+5. Solving this quest does not change the EUR 250, quest 3, or any main document.
+
+### CH-I-QUEST-005 — The Apparent Hold
+
+- Kind: side. Optional. Visible from the start. Not a condition for the main tasks.
+- Case: `FILE-2026-088`.
+- Accepted answer: `E-88-R`
+- Success message: “The posting has been identified. The correction note is now available for examination.”
+- Reward: `FILE-2026-004`. The EUR 250.00 line was a duplicate custody fee, reversed the same day. The account was not restricted. The amount was not the allocation under review.
+
+Solution:
+
+1. Juul contributes the original booking reference `E-88`. His extract does not mention a correction or a reversal. The ledger contains that open line and also `E-88-R`.
+2. Amber contributes the correction rule: the explanation is the original booking reference followed by `-R`, not the open posting. She is not told the reference. The ledger has three corrections, including two custody reversals, `E-88-R` and `E-91-R`.
+3. `E-88` with that rule is `E-88-R`. `E-91-R` is the other custody correction.
+4. `E-88` and `E-91-R` are refused.
+5. The reward says the line was a duplicate custody fee, reversed the same day, and was not the restricted allocation. Solving this quest releases only that note.
+
 ## 6. Unlock relationships and resulting state
 
 | Completed task | Assignment | Document released | Who can then read it | Document status after release |
@@ -458,16 +607,25 @@ Hints: none written. Reveal order: not defined.
 | `CH-I-TASK-001` | The same assignment | `CH-I-DOC-010` | Juul and Amber | Already published. The rule was holding it. |
 | `CH-I-TASK-001` | The same assignment | Quest `CH-I-QUEST-002` and task `CH-I-TASK-002` | Juul and Amber | Already published. The quest stays hidden until this task is complete. |
 | `CH-I-TASK-002` | One shared assignment | `CH-I-DOC-011` | Juul and Amber | Remains draft. The rule releases it. |
+| `CH-I-TASK-002` | The same assignment | `CH-I-DOC-012` | Juul only | Already published. The rule was holding it. |
+| `CH-I-TASK-002` | The same assignment | `CH-I-DOC-013` | Amber only | Already published. The rule was holding it. |
+| `CH-I-TASK-002` | The same assignment | `CH-I-DOC-014` | Juul and Amber | Already published. The rule was holding it. |
+| `CH-I-TASK-002` | The same assignment | Quest `CH-I-QUEST-003` and task `CH-I-TASK-003` | Juul and Amber | Already published. The quest stays hidden until this task is complete. |
+| `CH-I-TASK-003` | One shared assignment | `CH-I-DOC-015` | Juul and Amber | Remains draft. The rule releases it. Chapter I’s finding. It releases nothing else. |
+| `CH-I-TASK-004` | One shared assignment | `ARCH-2019-004` | Juul and Amber | Optional. Remains draft until the closed-file task is solved. |
+| `CH-I-TASK-005` | One shared assignment | `FILE-2026-004` | Juul and Amber | Optional. Remains draft until the apparent-hold task is solved. |
 
 A wrong answer changes nothing except that a refused submission is stored. Completing the shared assignment updates both participants at once. There is no separate Amber assignment to complete. A solved task stays solved. The initializer does not clear it, and the participant is not asked to solve it again.
 
 `CH-I-DOC-007` is the bridge into puzzle 2. It does not reveal `TR-1030`, category `B`, or Compliance.
 
-`CH-I-DOC-011` confirms `TR-1030-B`, says the item was received electronically, and says the original paper is missing and no final receipt was issued. It does not add another task.
+`CH-I-DOC-011` confirms `TR-1030-B`, says the item was received electronically, and says the original paper is missing and no final receipt was issued. It does not name the confirmation status used in quest 3.
 
 ## 7. Optional content and red herrings
 
-No optional quest, document, or hint exists.
+The two side quests above are optional. They are on the task list from the start, after the open main task, and they leave the list only when solved. They are not counted in the participant’s shared progress line. The administrator overview still counts their assignments.
+
+No hint text is stored. The task instructions are the only guidance inside the application.
 
 Rows that are present so the answer is not the only line on the page:
 
@@ -488,7 +646,7 @@ Actions the house can take now:
 
 | When | Action |
 | --- | --- |
-| Before the first play | Run `--initialize-chapter-i` once on that database. It publishes the case, documents 001–006 and 008–010, both quests, and both tasks. It leaves documents 007 and 011 as drafts. It holds quest 2, and documents 008–010, until task 1 is complete. It does not complete either assignment. A deploy does not run this command. |
+| Before the first play | Run `--initialize-chapter-i` once on that database. It publishes the account case, the 2019 file, and the apparent-hold file. It publishes documents 001–006, 008–010, and 012–014, plus the opening papers of both optional files. It leaves 007, 011, 015, and the two reward notes as drafts. It holds quest 2 until task 1, and quest 3 until task 2. The optional quests are available immediately. It does not complete any assignment and it does not create Chapter II. A deploy does not run this command. |
 | After puzzle 1 is already solved | The same command is safe to run again. It repairs changed wording, including document 003 and the letterhead of document 005, and it keeps every submission and completed assignment. Because task 1 is already complete, quest 2 and documents 008–010 become visible as soon as the command finishes. No separate publish step is required. |
 | During play | Read submissions in the quest. A refused submission stays on the task. Do not complete an assignment by hand. |
 | If they are stuck | No hint can be sent from the administrator screens. Any help would be outside the application, and no hint text has been approved. |
@@ -513,11 +671,18 @@ The administrator overview counts every assignment, including one the participan
 
 | After this step | Juul and Amber, shared | Juul and Amber, tasks open | Documents newly visible | Administrator shared line |
 | --- | --- | --- | --- | --- |
-| Fresh start, puzzle 1 unsolved | 0 completed, 1 open | 1 open | 001, 002, 003, 006 for both; 004 for Juul; 005 for Amber | 0 completed, 2 open |
-| Puzzle 1 solved, puzzle 2 not yet solved | 1 completed, 1 open | 1 open | 007 for both; 008 for Juul; 009 for Amber; 010 for both. 011 still hidden. | 1 completed, 1 open |
-| Both puzzles solved | 2 completed, 0 open | Nothing is waiting | `CH-I-DOC-011` for both | 2 completed, 0 open |
+| Fresh start, puzzle 1 unsolved | 0 completed, 1 open | Quest 1, plus the two optional quests if they are still open | 001, 002, 003, 006 for both; 004 for Juul; 005 for Amber. Also the opening papers of both optional files. | 0 completed, 5 open |
+| Puzzle 1 solved, puzzle 2 not yet solved | 1 completed, 1 open | Quest 2, plus any unsolved optional quest | 007 for both; 008 for Juul; 009 for Amber; 010 for both. 011 and quest 3 still hidden. | 1 completed, 4 open, if the optional quests are unsolved |
+| Puzzles 1 and 2 solved, puzzle 3 open | 2 completed, 1 open | Quest 3, plus any unsolved optional quest | 011 for both; 012 for Juul; 013 for Amber; 014 for both. 015 still hidden. | 2 completed, 3 open, if the optional quests are unsolved |
+| All three main tasks solved | 3 completed, 0 open | Only an unsolved optional quest, otherwise nothing is waiting | `CH-I-DOC-015` for both | 3 completed, 2 open, if the optional quests are unsolved |
 
-Headline on the dashboard at a fresh start: “Shared work is waiting.” The progress section can still say “Not started”, for the reason in section 3. After puzzle 1, shared work is still waiting, so that headline remains. After both shared tasks are solved, and no individual task exists, the headline becomes “Your matter is not started.” The shared line is the reliable progress line.
+The participant shared line counts main quests only, and only once they are released. The administrator shared line counts every shared assignment, including hidden main quests and both side quests. Optional quests never move the participant shared line.
+
+Headline on the dashboard at a fresh start: “Shared work is waiting.” The progress section can still say “Not started”, for the reason in section 3. After puzzle 1 and after puzzle 2, shared work is still waiting, so that headline remains. After all three main tasks are solved, and no individual task exists, the headline becomes “Your matter is not started.” The shared line is the reliable progress line.
+
+After document 015, the participants can know all of the following. The supporting record was registered as `REG-1026-17` on 29 October 2026 by Records Administration. It was transferred on 30 October 2026 in batch `TR-1030`, routing category B, to Compliance, as row `TR-1030-B`. Compliance has an electronic intake and does not have a physical receipt. The original paper’s location is unknown. Nothing in the file proves fraud or intentional removal. The review is still open, and the EUR 250.00 is still unavailable.
+
+The following stays unanswered for a later chapter. Where the original paper is. Who last had it. Why the electronic intake and the physical file disagree. Whether the 2019 closure, or the removed identity in `ARCHIVE-2019-047`, has any connection to this review. The archive reward says that no entry in that file identifies such a connection; it does not explain the removal. The apparent hold is explained and closed, and it is not this allocation. No Chapter II case, quest, or document is created when Chapter I is finished. Opening a later chapter remains an administrator action, and that action has no content yet.
 
 ## 10. End-to-end playthrough checklist
 
@@ -545,10 +710,16 @@ Use a fresh pair of accounts, or a future reset, before treating this as the wed
 - [ ] Neither personal paper names Compliance.
 - [ ] A wrong department, including `TR-1030-B`, is refused. Document 011 stays hidden for both.
 - [ ] `Compliance` is accepted. Both see the shared task complete and both can read document 011. It is “New” for each of them until that person opens it. Opening it as Juul leaves Amber’s mark.
-- [ ] Document 011 cites `TR-1030-B` and does not create another task.
-- [ ] Dashboard shared line: 2 completed, 0 open. Tasks line: nothing waiting.
-- [ ] Administrator overview matches those two completed shared tasks and does not show a leftover draft assignment as open.
-- [ ] No hint, phone request, or Chapter II item appeared, because none exists.
+- [ ] Document 011 cites `TR-1030-B`. Quest 3, document 012 or 013, and document 014 appear for the right people.
+- [ ] Juul sees 012 and 014, and does not see 013 or 015. Amber sees 013 and 014, and does not see 012 or 015.
+- [ ] Neither personal paper contains `ELECTRONIC RECEIPT ONLY`. Juul’s handling alone matches two rows. Amber’s verification alone matches two rows.
+- [ ] `ELECTRONIC RECEIPT PENDING` is refused. Document 015 stays hidden. Document 011 does not name a confirmation status, the handling, or the verification.
+- [ ] `ELECTRONIC RECEIPT ONLY` is accepted. Both can read document 015. It keeps the review open, does not allege fraud, and leaves the EUR 250.00 unavailable.
+- [ ] Dashboard shared line: 3 completed, 0 open. No Chapter II case or quest exists.
+- [ ] The Closed File and The Apparent Hold were available from the start and can still be open. Solving either one does not change the shared progress line or release a main document.
+- [ ] `CL-19` releases only the archive retention note. `E-88-R` releases only the posting correction note.
+- [ ] Administrator overview still shows an open shared assignment for each unsolved optional quest.
+- [ ] No hint, phone request, or Chapter II item appeared.
 - [ ] The temporary test-account switch is off before participants use the wedding-day site.
 
 ## Maintenance log
@@ -558,3 +729,6 @@ Use a fresh pair of accounts, or a future reset, before treating this as the wed
 | 5 November 2026 | First playthrough. Chapter I documents 001–011, quests 001 and 002, and both tasks. Hints, phone requests, correspondence delivery, archive content, game reset, and Chapter II marked not built. |
 | 5 November 2026 | Document 003 no longer gives the registration date or the department. Document 005 keeps the date and uses an Account Services letterhead. Puzzle 2 is published by the initializer and stays hidden until task 1 is complete. Documents 008–010 use the same hold. Document 011 stays a draft until task 2 is solved. |
 | 6 November 2026 | Documents are a vertical list. Registers are tables on the page. A personal “New” mark appears when a document first becomes visible after read tracking, and clears only for the participant who opens it. Puzzle 2 now includes the full transfer table and states why the submitted answer is Compliance rather than `TR-1030-B`. The task list is one column, and a finished quest leaves it. |
+| 6 November 2026 | Quest 3, documents 012–015, and the two optional files were added to the initializer. `ARCHIVE-2019-047` had not existed as a case. The apparent hold is a new file; the old register rows were not rewritten. Chapter II remains unbuilt. |
+| 6 November 2026 | The three new puzzles were reworked so each personal mark matches more than one shared row. Document 011, the quest wording, and documents 001–011 were not used as a shortcut. |
+| 6 November 2026 | The receipt statuses no longer repeat document 011’s sentences. Juul’s fee extract now gives only the original booking reference `E-88`; the correction rule stays on Amber’s note. |

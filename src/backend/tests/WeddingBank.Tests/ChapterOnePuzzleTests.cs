@@ -62,9 +62,9 @@ public sealed class ChapterOnePuzzleTests
         var tasks = await db.QuestTasks.ToDictionaryAsync(task => task.Reference, task => task.Id);
         var secondQuest = await db.Quests.SingleAsync(quest => quest.Reference == "CH-I-QUEST-002");
 
-        Assert.Equal(["CH-I-DOC-001", "CH-I-DOC-002", "CH-I-DOC-003", "CH-I-DOC-004", "CH-I-DOC-006"], await VisiblePapers(papers, Participants.Juul));
-        Assert.Equal(["CH-I-DOC-001", "CH-I-DOC-002", "CH-I-DOC-003", "CH-I-DOC-005", "CH-I-DOC-006"], await VisiblePapers(papers, Participants.Amber));
-        Assert.Equal(["CH-I-QUEST-001"], await VisibleQuests(quests, Participants.Juul));
+        Assert.Equal(["ARCH-2019-001", "ARCH-2019-003", "CH-I-DOC-001", "CH-I-DOC-002", "CH-I-DOC-003", "CH-I-DOC-004", "CH-I-DOC-006", "FILE-2026-001", "FILE-2026-003"], await VisiblePapers(papers, Participants.Juul));
+        Assert.Equal(["ARCH-2019-002", "ARCH-2019-003", "CH-I-DOC-001", "CH-I-DOC-002", "CH-I-DOC-003", "CH-I-DOC-005", "CH-I-DOC-006", "FILE-2026-002", "FILE-2026-003"], await VisiblePapers(papers, Participants.Amber));
+        Assert.Equal(["CH-I-QUEST-001", "CH-I-QUEST-004", "CH-I-QUEST-005"], await VisibleQuests(quests, Participants.Juul));
         Assert.Equal(OperationStatus.NotFound, (await quests.ReadForAsync(Participants.Juul, secondQuest.Id, CancellationToken.None)).Status);
         Assert.Equal(OperationStatus.NotFound, (await papers.ReadPaperAsync(Participants.Juul, documents["CH-I-DOC-008"], CancellationToken.None)).Status);
         Assert.Equal(OperationStatus.NotFound, (await papers.ReadPaperAsync(Participants.Amber, documents["CH-I-DOC-009"], CancellationToken.None)).Status);
@@ -73,18 +73,18 @@ public sealed class ChapterOnePuzzleTests
         var house = await progress.ReadCountsAsync(CancellationToken.None);
         Assert.Equal(1, hidden.SharedOpen);
         Assert.Equal(0, hidden.SharedCompleted);
-        Assert.Equal(2, house.SharedOpen);
+        Assert.Equal(5, house.SharedOpen);
 
         var wrong = await quests.SubmitAsync(Participants.Juul, tasks["CH-I-TASK-001"], "REG-1026-21", CancellationToken.None);
         Assert.False(wrong.Value!.Accepted);
-        Assert.Equal(["CH-I-QUEST-001"], await VisibleQuests(quests, Participants.Amber));
+        Assert.Equal(["CH-I-QUEST-001", "CH-I-QUEST-004", "CH-I-QUEST-005"], await VisibleQuests(quests, Participants.Amber));
         Assert.Equal(OperationStatus.NotFound, (await papers.ReadPaperAsync(Participants.Amber, documents["CH-I-DOC-007"], CancellationToken.None)).Status);
 
         var solved = await quests.SubmitAsync(Participants.Amber, tasks["CH-I-TASK-001"], "REG-1026-17", CancellationToken.None);
         Assert.True(solved.Value!.Accepted);
         Assert.True(solved.Value.Completed);
-        Assert.Equal(["CH-I-QUEST-001", "CH-I-QUEST-002"], await VisibleQuests(quests, Participants.Juul));
-        Assert.Equal(["CH-I-QUEST-001", "CH-I-QUEST-002"], await VisibleQuests(quests, Participants.Amber));
+        Assert.Equal(["CH-I-QUEST-001", "CH-I-QUEST-002", "CH-I-QUEST-004", "CH-I-QUEST-005"], await VisibleQuests(quests, Participants.Juul));
+        Assert.Equal(["CH-I-QUEST-001", "CH-I-QUEST-002", "CH-I-QUEST-004", "CH-I-QUEST-005"], await VisibleQuests(quests, Participants.Amber));
         Assert.Equal(OperationStatus.Ok, (await papers.ReadPaperAsync(Participants.Juul, documents["CH-I-DOC-007"], CancellationToken.None)).Status);
         Assert.Equal(OperationStatus.Ok, (await papers.ReadPaperAsync(Participants.Juul, documents["CH-I-DOC-008"], CancellationToken.None)).Status);
         Assert.Equal(OperationStatus.Ok, (await papers.ReadPaperAsync(Participants.Juul, documents["CH-I-DOC-010"], CancellationToken.None)).Status);
@@ -109,7 +109,7 @@ public sealed class ChapterOnePuzzleTests
         Assert.Equal(OperationStatus.Conflict, (await quests.SubmitAsync(Participants.Juul, tasks["CH-I-TASK-002"], "Compliance", CancellationToken.None)).Status);
         var done = await progress.ReadVisibleProgressAsync(Participants.Juul, CancellationToken.None);
         Assert.Equal(2, done.SharedCompleted);
-        Assert.Equal(0, done.SharedOpen);
+        Assert.Equal(1, done.SharedOpen);
         Assert.Equal(2, await db.Assignments.CountAsync(item => item.Completed));
         Assert.Equal(4, await db.Submissions.CountAsync());
 
@@ -123,9 +123,9 @@ public sealed class ChapterOnePuzzleTests
         Assert.Equal(submissionIds.Order().ToArray(), (await db.Submissions.Select(item => item.Id).ToArrayAsync()).Order().ToArray());
         Assert.Equal(2, await db.Submissions.CountAsync(item => item.Outcome == "REFUSED"));
         Assert.Equal(2, await db.Submissions.CountAsync(item => item.Outcome == "ACCEPTED"));
-        Assert.Equal(2, await db.Quests.CountAsync());
-        Assert.Equal(2, await db.QuestTasks.CountAsync());
-        Assert.Equal(11, await db.CaseDocuments.CountAsync());
+        Assert.Equal(5, await db.Quests.CountAsync());
+        Assert.Equal(5, await db.QuestTasks.CountAsync());
+        Assert.Equal(23, await db.CaseDocuments.CountAsync());
         foreach (var spec in ChapterOneCatalog.Documents)
         {
             var document = await db.CaseDocuments.SingleAsync(item => item.Reference == spec.Reference);
@@ -141,9 +141,12 @@ public sealed class ChapterOnePuzzleTests
         Assert.Equal(
             ["CH-I-DOC-007", "CH-I-DOC-008", "CH-I-DOC-009", "CH-I-DOC-010"],
             unlocks.Where(item => item.Task == "CH-I-TASK-001").Select(item => item.Document).Order().ToArray());
-        Assert.Equal(["CH-I-DOC-011"], unlocks.Where(item => item.Task == "CH-I-TASK-002").Select(item => item.Document).ToArray());
+        Assert.Equal(["CH-I-DOC-011", "CH-I-DOC-012", "CH-I-DOC-013", "CH-I-DOC-014"], unlocks.Where(item => item.Task == "CH-I-TASK-002").Select(item => item.Document).Order().ToArray());
+        Assert.Equal(["CH-I-DOC-015"], unlocks.Where(item => item.Task == "CH-I-TASK-003").Select(item => item.Document).ToArray());
         var firstTask = await db.QuestTasks.SingleAsync(item => item.Reference == "CH-I-TASK-001");
+        var secondTask = await db.QuestTasks.SingleAsync(item => item.Reference == "CH-I-TASK-002");
         Assert.Equal(firstTask.Id, (await db.Quests.SingleAsync(item => item.Reference == "CH-I-QUEST-002")).ReleasedByTaskId);
+        Assert.Equal(secondTask.Id, (await db.Quests.SingleAsync(item => item.Reference == "CH-I-QUEST-003")).ReleasedByTaskId);
     }
 
     private static async Task<string[]> VisiblePapers(CaseService papers, string login)

@@ -17,62 +17,89 @@ public sealed class ChapterOneInitializer(WeddingBankDbContext db, TimeProvider 
     {
         var report = new ChapterOneReport();
         var now = clock.GetUtcNow();
-        var references = ChapterOneCatalog.Documents.Select(document => document.Reference).ToArray();
-        var file = await db.CaseFiles
-            .Include(item => item.Documents)
-            .SingleOrDefaultAsync(item => item.Reference == ChapterOneCatalog.CaseReference, cancellationToken);
-        var misplacedQuery = db.CaseDocuments.Where(document => references.Contains(document.Reference));
-        if (file is not null)
+        if (await HasMisplacedDocumentsAsync(report, cancellationToken))
         {
-            var caseId = file.Id;
-            misplacedQuery = misplacedQuery.Where(document => document.CaseId != caseId);
-        }
-
-        var misplaced = await misplacedQuery.Select(document => document.Reference).ToListAsync(cancellationToken);
-        if (misplaced.Count > 0)
-        {
-            report.Conflicts.Add($"{string.Join(", ", misplaced.Distinct().Order())} already belongs to another case.");
             return report;
         }
 
-        if (file is null)
-        {
-            file = CaseFile.Open(Guid.CreateVersion7(), ChapterOneCatalog.CaseReference, ChapterOneCatalog.CaseTitle, ChapterOneCatalog.CaseSummary, ChapterOneCatalog.CaseIntroduction, Audiences.Both, 0, now);
-            db.CaseFiles.Add(file);
-            report.Lines.Add($"created case {ChapterOneCatalog.CaseReference}");
-        }
-        else if (ChangedCase(file))
-        {
-            file.Revise(ChapterOneCatalog.CaseReference, ChapterOneCatalog.CaseTitle, ChapterOneCatalog.CaseSummary, ChapterOneCatalog.CaseIntroduction, Audiences.Both, now);
-            report.Lines.Add($"repaired case {ChapterOneCatalog.CaseReference}");
-        }
-        else
-        {
-            report.Lines.Add($"unchanged case {ChapterOneCatalog.CaseReference}");
-        }
-
-        if (file.Status != CaseStatuses.Published)
-        {
-            file.SetStatus(CaseStatuses.Published, now);
-            report.Lines.Add($"published case {ChapterOneCatalog.CaseReference}");
-        }
-
-        for (var index = 0; index < ChapterOneCatalog.Documents.Length; index++)
-        {
-            EnsureDocument(file, ChapterOneCatalog.Documents[index], index, now, report);
-        }
-
         var tasks = new Dictionary<string, QuestTask>(StringComparer.Ordinal);
-        foreach (var spec in ChapterOneCatalog.Quests)
+        foreach (var spec in ChapterOneCatalog.Cases)
         {
-            if (await EnsureQuestAsync(file, spec, tasks, now, report, cancellationToken) is false)
+            var file = await EnsureCaseAsync(spec, now, report, cancellationToken);
+            for (var index = 0; index < spec.Documents.Length; index++)
             {
-                return Conflict(report, null);
+                EnsureDocument(file, spec.Documents[index], index, now, report);
+            }
+
+            foreach (var quest in spec.Quests)
+            {
+                if (await EnsureQuestAsync(file, quest, tasks, now, report, cancellationToken) is false)
+                {
+                    return Conflict(report, null);
+                }
             }
         }
 
         await db.SaveChangesAsync(cancellationToken);
         return report;
+    }
+
+    private async Task<bool> HasMisplacedDocumentsAsync(ChapterOneReport report, CancellationToken cancellationToken)
+    {
+        var misplaced = new List<string>();
+        foreach (var spec in ChapterOneCatalog.Cases)
+        {
+            var references = spec.Documents.Select(document => document.Reference).ToArray();
+            var owner = await db.CaseFiles.AsNoTracking().SingleOrDefaultAsync(item => item.Reference == spec.Reference, cancellationToken);
+            var query = db.CaseDocuments.Where(document => references.Contains(document.Reference));
+            if (owner is not null)
+            {
+                var caseId = owner.Id;
+                query = query.Where(document => document.CaseId != caseId);
+            }
+
+            misplaced.AddRange(await query.Select(document => document.Reference).ToListAsync(cancellationToken));
+        }
+
+        if (misplaced.Count == 0)
+        {
+            return false;
+        }
+
+        report.Conflicts.Add($"{string.Join(", ", misplaced.Distinct().Order())} already belongs to another case.");
+        return true;
+    }
+
+    private async Task<CaseFile> EnsureCaseAsync(ChapterOneCase spec, DateTimeOffset now, ChapterOneReport report, CancellationToken cancellationToken)
+    {
+        var file = await db.CaseFiles
+            .Include(item => item.Documents)
+            .SingleOrDefaultAsync(item => item.Reference == spec.Reference, cancellationToken);
+        if (file is null)
+        {
+            var stored = await db.CaseFiles.Select(item => (int?)item.DisplayOrder).MaxAsync(cancellationToken) ?? -1;
+            var pending = db.ChangeTracker.Entries<CaseFile>().Select(entry => entry.Entity.DisplayOrder).DefaultIfEmpty(-1).Max();
+            file = CaseFile.Open(Guid.CreateVersion7(), spec.Reference, spec.Title, spec.Summary, spec.Introduction, Audiences.Both, Math.Max(stored, pending) + 1, now);
+            db.CaseFiles.Add(file);
+            report.Lines.Add($"created case {spec.Reference}");
+        }
+        else if (ChangedCase(file, spec))
+        {
+            file.Revise(spec.Reference, spec.Title, spec.Summary, spec.Introduction, Audiences.Both, now);
+            report.Lines.Add($"repaired case {spec.Reference}");
+        }
+        else
+        {
+            report.Lines.Add($"unchanged case {spec.Reference}");
+        }
+
+        if (file.Status != CaseStatuses.Published)
+        {
+            file.SetStatus(CaseStatuses.Published, now);
+            report.Lines.Add($"published case {spec.Reference}");
+        }
+
+        return file;
     }
 
     private async Task<bool> EnsureQuestAsync(
@@ -112,13 +139,13 @@ public sealed class ChapterOneInitializer(WeddingBankDbContext db, TimeProvider 
         {
             var stored = await db.Quests.Select(item => (int?)item.DisplayOrder).MaxAsync(cancellationToken) ?? -1;
             var pending = db.ChangeTracker.Entries<Quest>().Select(entry => entry.Entity.DisplayOrder).DefaultIfEmpty(-1).Max();
-            quest = Quest.Open(Guid.CreateVersion7(), spec.Reference, spec.Title, spec.Description, spec.Instructions, file.Id, Audiences.Both, QuestKinds.Main, Math.Max(stored, pending) + 1, now);
+            quest = Quest.Open(Guid.CreateVersion7(), spec.Reference, spec.Title, spec.Description, spec.Instructions, file.Id, Audiences.Both, spec.Kind, Math.Max(stored, pending) + 1, now);
             db.Quests.Add(quest);
             report.Lines.Add($"created quest {spec.Reference}");
         }
         else if (ChangedQuest(quest, spec))
         {
-            quest.Revise(spec.Reference, spec.Title, spec.Description, spec.Instructions, file.Id, Audiences.Both, QuestKinds.Main, now);
+            quest.Revise(spec.Reference, spec.Title, spec.Description, spec.Instructions, file.Id, Audiences.Both, spec.Kind, now);
             report.Lines.Add($"repaired quest {spec.Reference}");
         }
         else
@@ -291,11 +318,11 @@ public sealed class ChapterOneInitializer(WeddingBankDbContext db, TimeProvider 
         return true;
     }
 
-    private static bool ChangedCase(CaseFile file)
+    private static bool ChangedCase(CaseFile file, ChapterOneCase spec)
     {
-        return file.Title != ChapterOneCatalog.CaseTitle
-            || file.Summary != ChapterOneCatalog.CaseSummary
-            || (file.Introduction ?? "") != ChapterOneCatalog.CaseIntroduction
+        return file.Title != spec.Title
+            || file.Summary != spec.Summary
+            || (file.Introduction ?? "") != spec.Introduction
             || file.Audience != Audiences.Both;
     }
 
@@ -305,7 +332,7 @@ public sealed class ChapterOneInitializer(WeddingBankDbContext db, TimeProvider 
             || quest.Description != spec.Description
             || quest.Instructions != spec.Instructions
             || quest.Audience != Audiences.Both
-            || quest.Kind != QuestKinds.Main;
+            || quest.Kind != spec.Kind;
     }
 
     private static bool ChangedTask(QuestTask task, ChapterOneTask spec)

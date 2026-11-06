@@ -28,10 +28,10 @@ public sealed class ChapterOneHttpTests
         Assert.Equal("DRAFT", DocumentStatuses(detail, "CH-I-DOC-007"));
         Assert.Equal("DRAFT", DocumentStatuses(detail, "CH-I-DOC-011"));
 
-        Assert.Equal(["CH-I-DOC-001", "CH-I-DOC-002", "CH-I-DOC-003", "CH-I-DOC-004", "CH-I-DOC-006"], await Papers(juul));
-        Assert.Equal(["CH-I-DOC-001", "CH-I-DOC-002", "CH-I-DOC-003", "CH-I-DOC-005", "CH-I-DOC-006"], await Papers(amber));
-        Assert.Equal(["CH-I-QUEST-001"], await QuestReferences(juul));
-        Assert.Equal(["CH-I-QUEST-001"], await QuestReferences(amber));
+        Assert.Equal(["ARCH-2019-001", "ARCH-2019-003", "CH-I-DOC-001", "CH-I-DOC-002", "CH-I-DOC-003", "CH-I-DOC-004", "CH-I-DOC-006", "FILE-2026-001", "FILE-2026-003"], await Papers(juul));
+        Assert.Equal(["ARCH-2019-002", "ARCH-2019-003", "CH-I-DOC-001", "CH-I-DOC-002", "CH-I-DOC-003", "CH-I-DOC-005", "CH-I-DOC-006", "FILE-2026-002", "FILE-2026-003"], await Papers(amber));
+        Assert.Equal(["CH-I-QUEST-001", "CH-I-QUEST-004", "CH-I-QUEST-005"], await QuestReferences(juul));
+        Assert.Equal(["CH-I-QUEST-001", "CH-I-QUEST-004", "CH-I-QUEST-005"], await QuestReferences(amber));
         Assert.Equal(HttpStatusCode.NotFound, (await juul.GetAsync($"/api/client/quests/{second.Id}")).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await amber.GetAsync($"/api/client/quests/{second.Id}")).StatusCode);
         foreach (var reference in new[] { "CH-I-DOC-007", "CH-I-DOC-008", "CH-I-DOC-009", "CH-I-DOC-010", "CH-I-DOC-011" })
@@ -46,14 +46,14 @@ public sealed class ChapterOneHttpTests
         var refused = await SendAsync<AnswerBody>(juul, $"/api/client/quests/tasks/{first.Tasks.Single().Id}/answers", new { answer = "REG-1026-21" });
         Assert.Equal(HttpStatusCode.OK, refused.Status);
         Assert.False(refused.Body!.Accepted);
-        Assert.Equal(["CH-I-QUEST-001"], await QuestReferences(amber));
+        Assert.Equal(["CH-I-QUEST-001", "CH-I-QUEST-004", "CH-I-QUEST-005"], await QuestReferences(amber));
 
         var solved = await SendAsync<AnswerBody>(amber, $"/api/client/quests/tasks/{first.Tasks.Single().Id}/answers", new { answer = "REG-1026-17" });
         Assert.Equal(HttpStatusCode.OK, solved.Status);
         Assert.True(solved.Body!.Accepted);
         Assert.True(solved.Body.Completed);
-        Assert.Equal(["CH-I-QUEST-001", "CH-I-QUEST-002"], await QuestReferences(juul));
-        Assert.Equal(["CH-I-QUEST-001", "CH-I-QUEST-002"], await QuestReferences(amber));
+        Assert.Equal(["CH-I-QUEST-001", "CH-I-QUEST-002", "CH-I-QUEST-004", "CH-I-QUEST-005"], await QuestReferences(juul));
+        Assert.Equal(["CH-I-QUEST-001", "CH-I-QUEST-002", "CH-I-QUEST-004", "CH-I-QUEST-005"], await QuestReferences(amber));
         Assert.Equal(HttpStatusCode.OK, (await juul.GetAsync($"/api/client/documents/{documents["CH-I-DOC-007"]}")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await amber.GetAsync($"/api/client/documents/{documents["CH-I-DOC-007"]}")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await juul.GetAsync($"/api/client/documents/{documents["CH-I-DOC-008"]}")).StatusCode);

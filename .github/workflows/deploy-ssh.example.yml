@@ -1,0 +1,38 @@
+# Optional: SSH deploy from a self-hosted runner on your LAN (not GitHub cloud).
+# Rename to deploy-ssh.yml only if the runner can reach DEPLOY_HOST (e.g. 10.120.10.100).
+#
+# Required secrets: DEPLOY_HOST, DEPLOY_USER, DEPLOY_SSH_KEY
+# Optional secrets: DEPLOY_PATH, DEPLOY_HEALTH_URL
+#
+# GitHub-hosted ubuntu-latest cannot reach a private address. Use deploy.yml (runner on the VM).
+
+name: Deploy (SSH)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+      - run: dotnet test src/backend/WeddingBank.slnx --configuration Release --verbosity minimal
+
+  deploy:
+    needs: test
+    runs-on: self-hosted
+    steps:
+      - name: Deploy over SSH
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            export WEDDINGBANK_DEPLOY_DIR="${{ secrets.DEPLOY_PATH }}"
+            export WEDDINGBANK_HEALTH_URL="${{ secrets.DEPLOY_HEALTH_URL }}"
+            cd "${WEDDINGBANK_DEPLOY_DIR:-$HOME/config/weddingbank}"
+            bash deploy/deploy.sh

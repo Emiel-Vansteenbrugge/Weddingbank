@@ -1,0 +1,106 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Test backend
+        run: dotnet test src/backend/WeddingBank.slnx --configuration Release --verbosity minimal
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: src/frontend/package-lock.json
+
+      - name: Validate frontend
+        working-directory: src/frontend
+        run: |
+          npm ci
+          npm run typecheck
+          npm run lint
+          npm run build
+
+      - name: Render compose file
+        run: docker compose -f docker-compose.yml -f docker-compose.prod.yml --env-file .env.example config
+
+      - name: Check deploy script
+        run: bash -n deploy/deploy.sh
+
+  deploy:
+    needs: test
+    runs-on: self-hosted
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Free Docker disk space
+        run: |
+          set -euo pipefail
+          echo "==> Disk before cleanup"
+          df -h / /var/lib/docker 2>/dev/null || df -h /
+          docker system df || true
+
+          avail_kb="$(df -Pk / | awk 'NR==2 {print $4}')"
+          avail_gb="$((avail_kb / 1024 / 1024))"
+          echo "==> Free space on /: ${avail_gb}G"
+
+          prune_with_timeout() {
+            local desc="$1"
+            shift
+            echo "==> ${desc}"
+            if timeout 120 "$@"; then
+              return 0
+            fi
+            local rc=$?
+            if [[ "${rc}" -eq 124 ]]; then
+              echo "Warning: ${desc} timed out after 120s — continuing" >&2
+            else
+              echo "Warning: ${desc} exited ${rc} — continuing" >&2
+            fi
+            return 0
+          }
+
+          if [[ "${avail_gb}" -gt 15 ]]; then
+            echo "==> Skipping aggressive prune (>15G free)"
+            prune_with_timeout "container prune" docker container prune -f
+            prune_with_timeout "network prune" docker network prune -f
+          else
+            echo "==> Low disk (${avail_gb}G free) — running timed prunes"
+            prune_with_timeout "builder prune" docker builder prune -af
+            prune_with_timeout "image prune" docker image prune -af
+            prune_with_timeout "container prune" docker container prune -f
+            prune_with_timeout "network prune" docker network prune -f
+          fi
+
+          echo "==> Disk after cleanup"
+          df -h / /var/lib/docker 2>/dev/null || df -h /
+          docker system df || true
+
+      - name: Deploy via deploy script
+        env:
+          # Optional: set DEPLOY_PATH secret (e.g. /home/administrator/config/weddingbank).
+          # If unset, deploy.sh prefers that path and requires .env there.
+          WEDDINGBANK_DEPLOY_DIR: ${{ secrets.DEPLOY_PATH }}
+          WEDDINGBANK_DEPLOY_BRANCH: main
+          WEDDINGBANK_HEALTH_URL: ${{ secrets.DEPLOY_HEALTH_URL }}
+        run: bash deploy/deploy.sh

@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/tests/">
+    <Project Path="tests/WeddingBank.Tests/WeddingBank.Tests.csproj" />
+  </Folder>
+  <Project Path="WeddingBank.Api/WeddingBank.Api.csproj" />
+  <Project Path="WeddingBank.Application/WeddingBank.Application.csproj" />
+  <Project Path="WeddingBank.Domain/WeddingBank.Domain.csproj" />
+  <Project Path="WeddingBank.Infrastructure/WeddingBank.Infrastructure.csproj" />
+</Solution>

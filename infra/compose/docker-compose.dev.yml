@@ -1,0 +1,24 @@
+# Local development only. Test and production never publish PostgreSQL.
+name: weddingbank-dev
+
+services:
+  postgres:
+    image: postgres:18
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-weddingbank}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-weddingbank_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-weddingbank}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - weddingbank_dev_pgdata:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+
+volumes:
+  weddingbank_dev_pgdata:

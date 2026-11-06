@@ -1,0 +1,9 @@
+[Unit]
+Description=Create the daily Wedding Bank production database dump
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /usr/local/sbin/weddingbank-backup.sh production daily
+NoNewPrivileges=true

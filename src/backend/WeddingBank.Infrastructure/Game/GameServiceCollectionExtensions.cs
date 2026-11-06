@@ -10,6 +10,7 @@ public static class GameServiceCollectionExtensions
         services.AddScoped<IGameStore, EfGameStore>();
         services.AddScoped<GameService>();
         services.AddScoped<ICaseStore, EfCaseStore>();
+        services.AddScoped<IDocumentReadStore, EfDocumentReadStore>();
         services.AddScoped<CaseService>();
         services.AddScoped<EfQuestStore>();
         services.AddScoped<IQuestStore>(provider => provider.GetRequiredService<EfQuestStore>());

@@ -38,6 +38,10 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
 
     public DbSet<DocumentUnlock> DocumentUnlocks => Set<DocumentUnlock>();
 
+    public DbSet<DocumentReading> DocumentReadings => Set<DocumentReading>();
+
+    public DbSet<DocumentReadBaseline> DocumentReadBaselines => Set<DocumentReadBaseline>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Role>(entity =>
@@ -302,6 +306,26 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
                 .WithMany()
                 .HasForeignKey(unlock => unlock.DocumentId)
                 .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        modelBuilder.Entity<DocumentReading>(entity =>
+        {
+            entity.ToTable("DocumentReadings", table => table.HasCheckConstraint(
+                "CK_DocumentReadings_Participant",
+                $"\"ParticipantLogin\" IN ('{Participants.Juul}', '{Participants.Amber}')"));
+            entity.Property(reading => reading.Id).ValueGeneratedNever();
+            entity.Property(reading => reading.ParticipantLogin).HasMaxLength(LoginMax).IsRequired();
+            entity.HasIndex(reading => new { reading.DocumentId, reading.ParticipantLogin }).IsUnique();
+            entity.HasOne<CaseDocument>()
+                .WithMany()
+                .HasForeignKey(reading => reading.DocumentId)
+                .OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<DocumentReadBaseline>(entity =>
+        {
+            entity.ToTable("DocumentReadBaselines");
+            entity.Property(baseline => baseline.Id).ValueGeneratedNever();
         });
     }
 

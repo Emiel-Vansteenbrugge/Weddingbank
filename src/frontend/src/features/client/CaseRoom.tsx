@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { SiteLink } from '../../shared/SiteLink.tsx'
+import { DocumentList } from './DocumentList.tsx'
 import { PaperBody } from './PaperBody.tsx'
 import {
   fetchPaper,
@@ -88,11 +89,7 @@ export function ParticipantCase({ caseId }: { caseId: string }) {
       {record.documents.length === 0 ? (
         <p className="section-note">No papers are held in this dossier.</p>
       ) : (
-        <div className="empty-list">
-          {record.documents.map((item) => (
-            <DocumentCard key={item.id} item={item} />
-          ))}
-        </div>
+        <DocumentList documents={record.documents} />
       )}
     </>
   )
@@ -126,11 +123,7 @@ export function ParticipantDocuments() {
       {papers.length === 0 ? (
         <p className="section-note">No papers are held for you.</p>
       ) : (
-        <div className="empty-list">
-          {papers.map((item) => (
-            <DocumentCard key={item.id} item={item} />
-          ))}
-        </div>
+        <DocumentList documents={papers} />
       )}
     </>
   )
@@ -174,16 +167,3 @@ export function ParticipantDocument({ documentId }: { documentId: string }) {
   )
 }
 
-function DocumentCard({ item }: { item: ReadingDocument }) {
-  return (
-    <section>
-      <p className="status-mark">{item.category}</p>
-      <h2>
-        <SiteLink href={`/client/documents/${item.id}`} className="text-link">
-          {item.title}
-        </SiteLink>
-      </h2>
-      <p>{item.description ?? item.caseTitle}</p>
-    </section>
-  )
-}

@@ -81,6 +81,7 @@ public sealed class EnquiryEndpointTests
     {
         return new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
+            builder.UseSetting("Documents:DeferReadBaseline", "true");
             builder.ConfigureTestServices(services =>
             {
                 services.RemoveAll<IEnquirySender>();

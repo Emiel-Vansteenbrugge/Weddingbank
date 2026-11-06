@@ -66,7 +66,8 @@ public sealed record ReadingDocument(
     string Title,
     string Category,
     string? Description,
-    int DisplayOrder);
+    int DisplayOrder,
+    bool IsNew);
 
 public sealed record ReadingPaper(
     Guid Id,
@@ -78,7 +79,8 @@ public sealed record ReadingPaper(
     string Category,
     string? Description,
     string Content,
-    int DisplayOrder);
+    int DisplayOrder,
+    bool IsNew);
 
 public sealed record CaseDraft(string? Reference, string? Title, string? Summary, string? Introduction, string? Audience);
 

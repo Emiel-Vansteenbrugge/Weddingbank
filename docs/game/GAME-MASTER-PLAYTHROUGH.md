@@ -32,7 +32,7 @@ No chapter after this is written. No side quest is written. No hint text is writ
 | --- | --- | --- | --- | --- |
 | Chapter I | `CH-I-001` | The Account | Published. In the initializer. | The case both participants can open. |
 | Quest 1 | `CH-I-QUEST-001` | The Missing Record | Published. In the initializer. | One shared task. |
-| Task 1 | `CH-I-TASK-001` | Identify the Registry Entry | Published. In the initializer. | Accepts `REG-1026-17` and releases `CH-I-DOC-007`. |
+| Task 1 | `CH-I-TASK-001` | Identify the Registry Entry | Published. In the initializer. | Accepts `REG-1026-17` and releases documents 007, 008, 009, and 010, plus quest 2. |
 | Quest 2 | `CH-I-QUEST-002` | The Unconfirmed Transfer | Published, held until task 1 is complete. In the initializer. | One shared task. |
 | Task 2 | `CH-I-TASK-002` | Identify the Receiving Department | Published, held with its quest. In the initializer. | Accepts `Compliance` and releases `CH-I-DOC-011`. |
 | Chapter II | — | — | Not built. | No case, quest, document, or ending exists. |
@@ -83,6 +83,29 @@ A document is visible when all of these are true:
 `CH-I-DOC-008`, `CH-I-DOC-009`, and `CH-I-DOC-010` are published, and they carry the same kind of lock from `CH-I-TASK-001`. They stay hidden until that task is complete. Quest 2 is published as well, and it names task 1 as the task that releases it. Until then, the quest and its task are absent from the participant desk, and a direct request returns the same “not available” result as a missing quest.
 
 Descriptions stored on these documents are empty. The text below is the document body.
+
+### How the participant sees documents and tasks
+
+The documents page, and the documents inside a case, are one vertical list. One document is one row. The row shows a document mark, the title, the category under the title, and a chevron. The whole row opens the document. There is no search, filter, or sort. The list uses the house colours, a thin rule between rows, and no cards.
+
+`CH-I-DOC-006` and `CH-I-DOC-010` are stored as pipe-separated lines. On the document page those lines are drawn as a table. The stored text is unchanged.
+
+A gold “New” mark means this participant can see the document and has not opened it since read tracking began.
+
+- Opening the document removes “New” for that participant only. A shared document stays “New” for the other participant until they open it.
+- The first start of the API after this feature records every document that is already visible, for Juul and for Amber, as already known. Those rows are not “New”. That record does not change assignments, submissions, or completion.
+- A document that becomes visible later is “New” for each participant who can open it. That includes a document released by a solved task.
+- Signing in again does not bring “New” back after the document has been opened.
+- Hiding a document and publishing it again does not make it “New” if that participant has already opened it.
+- Asking for a document that is still hidden returns “not available” and does not record a reading.
+
+The task list is one column, not a row of tiles. A quest with no open task leaves the list. The acceptance sentence remains on the quest page. The dashboard shared line still shows how many shared tasks are complete.
+
+### Automated coverage and what still needs a person
+
+The backend tests sign in as Juul, Amber, and the administrator and check the read mark over HTTP: documents already visible when tracking starts are not “New”; a document added afterwards is “New” for both; opening it clears only that participant’s mark; a later sign-in and a later republish do not restore it; documents released by task 1 and task 2 are “New” for the participants who can see them; a direct request for document 011 before task 2 is solved is refused and does not clear the mark that appears once it is released. The frontend test checks that the list is rows, that the whole row is the link, and that “New” is present only on an unread row.
+
+Those tests do not look at the screen. A person still needs to confirm, on a phone and on a desktop, that the row, the gold “New”, the chevron, and the register table look right, and that opening a document removes only that person’s mark.
 
 #### CH-I-DOC-001 — Account Statement — 04 November 2026
 
@@ -405,14 +428,23 @@ Information each person holds after puzzle 1:
 - Both, from `CH-I-DOC-010`: the four transfer rows.
 - Both, after puzzle 1, from `CH-I-DOC-007`: the transfer happened on 30 October 2026 and physical receipt is unconfirmed. That document names neither the batch, the category, nor Compliance.
 
+The Departmental Transfer Register, as the participant sees it:
+
+| Reference | Routing category | Receiving department | Subject |
+| --- | --- | --- | --- |
+| `TR-1030-A` | A | Account Services | Account review |
+| `TR-1030-B` | B | Compliance | Supporting documentation |
+| `TR-1030-C` | C | Legal Affairs | Supporting documentation |
+| `TR-1031-B` | B | Records Administration | Correspondence |
+
 Step-by-step solution:
 
-1. Juul contributes batch `TR-1030`.
-2. Amber contributes routing category `B`.
+1. Juul contributes batch `TR-1030`. That keeps `TR-1030-A`, `TR-1030-B`, and `TR-1030-C`, and removes `TR-1031-B`.
+2. Amber contributes routing category `B`. Inside the remaining batch, category A and category C drop out.
 3. The only row that is both batch `TR-1030` and category `B` is `TR-1030-B`.
-4. The receiving department on that row is Compliance. The subject is “Supporting documentation”.
-5. Submit `Compliance`.
-6. The shared task completes and `CH-I-DOC-011` opens for both.
+4. The receiving department on that row is Compliance. The subject is “Supporting documentation”. `TR-1030-B` is the register reference that identifies the row. It is not the answer the task accepts.
+5. Submit `Compliance`. The comparison trims spaces and ignores capital letters, then requires the remaining text to be exactly that department name. `TR-1030-B` is refused.
+6. The shared task completes and `CH-I-DOC-011` opens for both. For each participant who can see it, the document is marked “New” until that participant opens it.
 
 Hints: none written. Reveal order: not defined.
 
@@ -497,20 +529,22 @@ Use a fresh pair of accounts, or a future reset, before treating this as the wed
 - [ ] Accounts says “Private account” and “Nothing has been posted.”
 - [ ] Correspondence says “The house has not written.” Archive says “The archive has not been opened.”
 - [ ] Both see case `CH-I-001`, The Account.
+- [ ] Documents are a vertical list: mark, title, category, chevron. Registers 006 and 010 open as tables.
+- [ ] Documents already visible when read tracking started are not marked “New”.
 - [ ] Both see documents 001, 002, 003, and 006.
 - [ ] Only Juul sees 004. Only Amber sees 005.
 - [ ] Neither sees 007, 008, 009, 010, or 011.
 - [ ] Tasks shows only The Missing Record, with one open shared task.
 - [ ] Dashboard shared line: 0 completed, 1 open. Tasks line: 1 open.
 - [ ] A wrong registry number is refused with “The submitted reference could not be verified.” Document 007 stays hidden. The task stays open for both.
-- [ ] `REG-1026-17` is accepted. Both see the task complete, the success message, and document 007.
+- [ ] `REG-1026-17` is accepted. The quest page shows the success message. The Missing Record then leaves the task list, because it has no open task. Document 007 is available, and it is “New” until that participant opens it.
 - [ ] Document 007 does not name a receiving department, a batch, or a routing category.
 - [ ] The Unconfirmed Transfer, document 008 or 009, and document 010 appear for the right people without another publish step.
 - [ ] Juul sees 008 and 010, and does not see 009 or 011.
 - [ ] Amber sees 009 and 010, and does not see 008 or 011.
 - [ ] Neither personal paper names Compliance.
 - [ ] A wrong department, including `TR-1030-B`, is refused. Document 011 stays hidden for both.
-- [ ] `Compliance` is accepted. Both see the shared task complete and both can read document 011.
+- [ ] `Compliance` is accepted. Both see the shared task complete and both can read document 011. It is “New” for each of them until that person opens it. Opening it as Juul leaves Amber’s mark.
 - [ ] Document 011 cites `TR-1030-B` and does not create another task.
 - [ ] Dashboard shared line: 2 completed, 0 open. Tasks line: nothing waiting.
 - [ ] Administrator overview matches those two completed shared tasks and does not show a leftover draft assignment as open.
@@ -523,3 +557,4 @@ Use a fresh pair of accounts, or a future reset, before treating this as the wed
 | --- | --- |
 | 5 November 2026 | First playthrough. Chapter I documents 001–011, quests 001 and 002, and both tasks. Hints, phone requests, correspondence delivery, archive content, game reset, and Chapter II marked not built. |
 | 5 November 2026 | Document 003 no longer gives the registration date or the department. Document 005 keeps the date and uses an Account Services letterhead. Puzzle 2 is published by the initializer and stays hidden until task 1 is complete. Documents 008–010 use the same hold. Document 011 stays a draft until task 2 is solved. |
+| 6 November 2026 | Documents are a vertical list. Registers are tables on the page. A personal “New” mark appears when a document first becomes visible after read tracking, and clears only for the participant who opens it. Puzzle 2 now includes the full transfer table and states why the submitted answer is Compliance rather than `TR-1030-B`. The task list is one column, and a finished quest leaves it. |

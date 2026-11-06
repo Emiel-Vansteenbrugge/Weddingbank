@@ -56,7 +56,7 @@ public sealed class ChapterOnePuzzleTests
         var cases = new EfCaseStore(db);
         var clock = new FixedTime(now);
         var quests = new QuestService(store, cases, clock);
-        var papers = new CaseService(cases, store, clock);
+        var papers = new CaseService(cases, store, new EfDocumentReadStore(db), clock);
         var progress = new EfGameStore(db);
         var documents = await db.CaseDocuments.ToDictionaryAsync(document => document.Reference, document => document.Id);
         var tasks = await db.QuestTasks.ToDictionaryAsync(task => task.Reference, task => task.Id);

@@ -2,7 +2,7 @@ using WeddingBank.Domain.Game;
 
 namespace WeddingBank.Application.Game;
 
-public sealed class CaseService(ICaseStore cases, IDocumentGate gate, TimeProvider clock)
+public sealed class CaseService(ICaseStore cases, IDocumentGate gate, IDocumentReadStore reads, TimeProvider clock)
 {
     public async Task<IReadOnlyList<CaseSummary>> ListAsync(CancellationToken cancellationToken)
     {
@@ -219,7 +219,7 @@ public sealed class CaseService(ICaseStore cases, IDocumentGate gate, TimeProvid
             .Where(file => file.IsOpenTo(login))
             .OrderBy(file => file.DisplayOrder)
             .ThenBy(file => file.Reference)
-            .Select(file => ReadingOf(file, login, includeDocuments: false, DocumentLocks.None))
+            .Select(file => ReadingOf(file, login, includeDocuments: false, DocumentLocks.None, EmptyReads))
             .ToArray();
     }
 
@@ -232,18 +232,20 @@ public sealed class CaseService(ICaseStore cases, IDocumentGate gate, TimeProvid
         }
 
         var locks = await gate.LocksForAsync(login, cancellationToken);
-        return OperationResult<ReadingCase>.Ok(ReadingOf(file, login, includeDocuments: true, locks));
+        var read = await reads.ReadDocumentIdsAsync(login, cancellationToken);
+        return OperationResult<ReadingCase>.Ok(ReadingOf(file, login, includeDocuments: true, locks, read));
     }
 
     public async Task<IReadOnlyList<ReadingDocument>> PapersForAsync(string login, CancellationToken cancellationToken)
     {
         var files = await cases.ListAsync(cancellationToken);
         var locks = await gate.LocksForAsync(login, cancellationToken);
+        var read = await reads.ReadDocumentIdsAsync(login, cancellationToken);
         return files
             .Where(file => file.IsOpenTo(login))
             .OrderBy(file => file.DisplayOrder)
             .ThenBy(file => file.Reference)
-            .SelectMany(file => OpenDocuments(file, login, locks).Select(document => PaperOf(file, document)))
+            .SelectMany(file => OpenDocuments(file, login, locks).Select(document => PaperOf(file, document, read)))
             .ToArray();
     }
 
@@ -259,12 +261,33 @@ public sealed class CaseService(ICaseStore cases, IDocumentGate gate, TimeProvid
                 continue;
             }
 
-            return Visible(file, document, login, locks)
-                ? OperationResult<ReadingPaper>.Ok(PaperTextOf(file, document))
-                : OperationResult<ReadingPaper>.NotFound("That document is not available.");
+            if (!Visible(file, document, login, locks))
+            {
+                return OperationResult<ReadingPaper>.NotFound("That document is not available.");
+            }
+
+            await reads.MarkReadAsync(login, document.Id, clock.GetUtcNow(), cancellationToken);
+            return OperationResult<ReadingPaper>.Ok(PaperTextOf(file, document));
         }
 
         return OperationResult<ReadingPaper>.NotFound("That document is not available.");
+    }
+
+    public async Task EstablishReadBaselineAsync(CancellationToken cancellationToken = default)
+    {
+        if (await reads.IsEstablishedAsync(cancellationToken))
+        {
+            return;
+        }
+
+        var now = clock.GetUtcNow();
+        foreach (var login in Participants.Logins)
+        {
+            var papers = await PapersForAsync(login, cancellationToken);
+            await reads.AcknowledgeAsync(login, papers.Select(paper => paper.Id).ToArray(), now, cancellationToken);
+        }
+
+        await reads.EstablishAsync(now, cancellationToken);
     }
 
     private static bool TryCase(
@@ -366,10 +389,10 @@ public sealed class CaseService(ICaseStore cases, IDocumentGate gate, TimeProvid
         return new DocumentDetail(document.Id, document.CaseId, document.Reference, document.Title, document.Category, document.Description, document.Content, document.Status, document.Audience, document.DisplayOrder, document.CreatedAt, document.UpdatedAt);
     }
 
-    private static ReadingCase ReadingOf(CaseFile file, string login, bool includeDocuments, DocumentLocks locks)
+    private static ReadingCase ReadingOf(CaseFile file, string login, bool includeDocuments, DocumentLocks locks, IReadOnlySet<Guid> read)
     {
         IReadOnlyList<ReadingDocument> documents = includeDocuments
-            ? OpenDocuments(file, login, locks).Select(document => PaperOf(file, document)).ToArray()
+            ? OpenDocuments(file, login, locks).Select(document => PaperOf(file, document, read)).ToArray()
             : [];
         return new ReadingCase(file.Id, file.Reference, file.Title, file.Summary, file.Introduction, documents);
     }
@@ -393,13 +416,15 @@ public sealed class CaseService(ICaseStore cases, IDocumentGate gate, TimeProvid
         return released && !locks.Hidden.Contains(document.Id);
     }
 
-    private static ReadingDocument PaperOf(CaseFile file, CaseDocument document)
+    private static ReadingDocument PaperOf(CaseFile file, CaseDocument document, IReadOnlySet<Guid> read)
     {
-        return new ReadingDocument(document.Id, file.Id, file.Reference, file.Title, document.Reference, document.Title, document.Category, document.Description, document.DisplayOrder);
+        return new ReadingDocument(document.Id, file.Id, file.Reference, file.Title, document.Reference, document.Title, document.Category, document.Description, document.DisplayOrder, !read.Contains(document.Id));
     }
 
     private static ReadingPaper PaperTextOf(CaseFile file, CaseDocument document)
     {
-        return new ReadingPaper(document.Id, file.Id, file.Reference, file.Title, document.Reference, document.Title, document.Category, document.Description, document.Content, document.DisplayOrder);
+        return new ReadingPaper(document.Id, file.Id, file.Reference, file.Title, document.Reference, document.Title, document.Category, document.Description, document.Content, document.DisplayOrder, false);
     }
+
+    private static readonly IReadOnlySet<Guid> EmptyReads = new HashSet<Guid>();
 }

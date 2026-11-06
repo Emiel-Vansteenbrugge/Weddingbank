@@ -4,6 +4,7 @@ using WeddingBank.Api;
 using WeddingBank.Api.Enquiries;
 using WeddingBank.Api.Game;
 using WeddingBank.Api.Identity;
+using WeddingBank.Application.Game;
 using WeddingBank.Infrastructure.Enquiries;
 using WeddingBank.Infrastructure.Game;
 using WeddingBank.Infrastructure.Identity;
@@ -112,6 +113,12 @@ if (app.Environment.IsProduction())
             await Task.Delay(TimeSpan.FromSeconds(2));
         }
     }
+}
+
+if (!app.Configuration.GetValue("Documents:DeferReadBaseline", false))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    await scope.ServiceProvider.GetRequiredService<CaseService>().EstablishReadBaselineAsync();
 }
 
 app.UseForwardedHeaders();

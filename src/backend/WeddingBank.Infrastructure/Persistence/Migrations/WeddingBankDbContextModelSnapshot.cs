@@ -224,6 +224,46 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
                         });
                 });
 
+            modelBuilder.Entity("WeddingBank.Domain.Game.DocumentReadBaseline", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("EstablishedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DocumentReadBaselines", (string)null);
+                });
+
+            modelBuilder.Entity("WeddingBank.Domain.Game.DocumentReading", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("DocumentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ParticipantLogin")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<DateTimeOffset>("ReadAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DocumentId", "ParticipantLogin")
+                        .IsUnique();
+
+                    b.ToTable("DocumentReadings", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_DocumentReadings_Participant", "\"ParticipantLogin\" IN ('Juul-V', 'Amber-D')");
+                        });
+                });
+
             modelBuilder.Entity("WeddingBank.Domain.Game.DocumentUnlock", b =>
                 {
                     b.Property<Guid>("Id")
@@ -721,6 +761,15 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
                     b.HasOne("WeddingBank.Domain.Game.CaseFile", null)
                         .WithMany("Documents")
                         .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("WeddingBank.Domain.Game.DocumentReading", b =>
+                {
+                    b.HasOne("WeddingBank.Domain.Game.CaseDocument", null)
+                        .WithMany()
+                        .HasForeignKey("DocumentId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

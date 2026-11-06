@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using WeddingBank.Application.Game;
 using WeddingBank.Application.Identity;
 using WeddingBank.Domain.Game;
 using WeddingBank.Domain.Identity;
@@ -237,6 +238,7 @@ public sealed class CaseApiFixture : IDisposable
         _factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder.UseSetting("Auth:AllowedOrigins:0", "http://localhost:5173");
+            builder.UseSetting("Documents:DeferReadBaseline", "true");
             builder.ConfigureTestServices(services =>
             {
                 services.RemoveAll<IIdentityStore>();
@@ -253,6 +255,12 @@ public sealed class CaseApiFixture : IDisposable
 
         using var scope = _factory.Services.CreateScope();
         scope.ServiceProvider.GetRequiredService<WeddingBankDbContext>().Database.EnsureCreated();
+    }
+
+    public async Task EstablishDocumentReadsAsync()
+    {
+        await using var scope = _factory.Services.CreateAsyncScope();
+        await scope.ServiceProvider.GetRequiredService<CaseService>().EstablishReadBaselineAsync();
     }
 
     public async Task InitializeChapterOneAsync()

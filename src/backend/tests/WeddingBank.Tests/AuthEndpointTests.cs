@@ -346,6 +346,7 @@ public class AuthApiFixture : IDisposable
         Factory = new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
         {
             builder.UseSetting("Auth:AllowedOrigins:0", "http://localhost:5173");
+            builder.UseSetting("Documents:DeferReadBaseline", "true");
             builder.UseSetting(TestAccountSwitch.EnabledKey, testAccountsEnabled ? "true" : "false");
             builder.ConfigureTestServices(services =>
             {

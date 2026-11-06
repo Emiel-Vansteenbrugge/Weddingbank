@@ -55,6 +55,7 @@ export type ReadingDocument = {
   category: string
   description: string | null
   displayOrder: number
+  isNew: boolean
 }
 
 export type ReadingPaper = ReadingDocument & {

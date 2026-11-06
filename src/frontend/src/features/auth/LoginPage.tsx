@@ -1,5 +1,4 @@
 import { useEffect, useState, type FormEvent, type KeyboardEvent } from 'react'
-import { bank } from '../public/content.ts'
 import { SiteLink } from '../../shared/SiteLink.tsx'
 import { homeFor } from '../../app/routes.ts'
 import { signIn, visit } from './api.ts'
@@ -21,7 +20,7 @@ export function LoginPage() {
   const [pending, setPending] = useState(false)
 
   useEffect(() => {
-    document.title = `Sign in — ${bank.name}`
+    document.title = 'Administrator — Wedding Bank'
   }, [])
 
   useEffect(() => {
@@ -56,14 +55,24 @@ export function LoginPage() {
     )
   }
 
+  if (session.state.status === 'ready' && !homeFor(session.state.user.roles)) {
+    return (
+      <main id="main" className="gate">
+        <p className="eyebrow">Administrator</p>
+        <h1>This sign-in does not open the game.</h1>
+        <p className="lede">Players do not have accounts. The room is shared.</p>
+        <button className="quiet-button" type="button" onClick={() => void session.signOut()}>
+          Sign out
+        </button>
+      </main>
+    )
+  }
+
   return (
     <main id="main" className="gate">
-      <SiteLink href="/" className="gate-mark">
-        <img src="/brand/ambre-jules.png" alt={bank.name} />
-      </SiteLink>
-      <p className="eyebrow">Client access</p>
+      <p className="eyebrow">Administrator</p>
       <h1>Sign in</h1>
-      <p className="lede">Access is issued by the house. There is no registration.</p>
+      <p className="lede">This entrance is for the administrator. Players do not sign in.</p>
       <form className="enquiry gate-form" onSubmit={onSubmit} onKeyDown={submitOnEnter}>
         <label>
           Login
@@ -82,8 +91,8 @@ export function LoginPage() {
           {pending ? 'Signing in' : 'Sign in'}
         </button>
       </form>
-      <SiteLink href="/" className="text-link">
-        Return to the entrance
+      <SiteLink href="/heist" className="text-link">
+        Return to the room
       </SiteLink>
     </main>
   )

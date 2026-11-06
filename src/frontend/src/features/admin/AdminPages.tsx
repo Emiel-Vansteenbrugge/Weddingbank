@@ -5,6 +5,7 @@ import { SiteLink } from '../../shared/SiteLink.tsx'
 import { fetchAudit, openParticipant, visit, type AuditRow } from '../auth/api.ts'
 import { SessionContext } from '../auth/session-context.ts'
 import { fetchOverview, fetchParticipant, type GameOverview, type ParticipantDesk } from '../game/game-api.ts'
+import { HeistDesk } from '../heist/HeistDesk.tsx'
 import { HousePasswords } from './HousePasswords.tsx'
 import { CaseEditor, CaseList, DocumentEditor } from './CaseDesk.tsx'
 import { QuestEditor, QuestList, TaskEditor } from './QuestDesk.tsx'
@@ -119,44 +120,7 @@ function GameSettings() {
 }
 
 function GameDashboard() {
-  const overview = useOverview()
-  const opening = useParticipantDesk()
-  if (overview.status === 'loading') return <p className="section-note">Reading the game…</p>
-  if (overview.status === 'error') {
-    return (
-      <p className="section-note" role="alert">
-        {overview.message}
-      </p>
-    )
-  }
-
-  const { game } = overview
-  return (
-    <>
-      <p className="eyebrow">Dashboard</p>
-      <h1>{game.status === 'NOT_STARTED' ? 'The game has not started.' : 'The game is running.'}</h1>
-      {opening.error ? <p className="form-status" role="alert">{opening.error}</p> : null}
-      <ParticipantTable game={game} pendingLogin={opening.pendingLogin} onOpen={opening.open} />
-      <div className="empty-list">
-        <section>
-          <h2>Shared progress</h2>
-          <p>{game.shared.stage}</p>
-        </section>
-        <section>
-          <h2>Answers waiting</h2>
-          <p>{game.outstandingSubmissions === 0 ? 'None' : String(game.outstandingSubmissions)}</p>
-        </section>
-        <section>
-          <h2>Phone requests</h2>
-          <p>{game.pendingPhoneRequests === 0 ? 'None waiting' : String(game.pendingPhoneRequests)}</p>
-        </section>
-        <section>
-          <h2>Recent hints</h2>
-          <p>{game.juul.hintsSent + game.amber.hintsSent + game.shared.hintsSent === 0 ? 'None sent' : 'Recorded'}</p>
-        </section>
-      </div>
-    </>
-  )
+  return <HeistDesk />
 }
 
 function ParticipantList() {

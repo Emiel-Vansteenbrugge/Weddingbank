@@ -285,6 +285,34 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
                     b.ToTable("DocumentUnlocks", (string)null);
                 });
 
+            modelBuilder.Entity("WeddingBank.Domain.Game.HeistRoom", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Stage")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("HeistRooms", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_HeistRooms_Stage", "\"Stage\" = 'entrance'");
+
+                            t.HasCheckConstraint("CK_HeistRooms_Status", "\"Status\" IN ('CLOSED', 'OPEN')");
+                        });
+                });
+
             modelBuilder.Entity("WeddingBank.Domain.Game.Notice", b =>
                 {
                     b.Property<Guid>("Id")

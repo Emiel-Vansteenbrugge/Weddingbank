@@ -1,15 +1,3 @@
-import { articles } from '../features/public/content.ts'
-
-export type PublicPage =
-  | 'home'
-  | 'about'
-  | 'services'
-  | 'expertise'
-  | 'insights'
-  | 'article'
-  | 'contact'
-  | 'not-found'
-
 export type ClientPageId =
   | 'dashboard'
   | 'accounts'
@@ -42,21 +30,9 @@ export type AdminPageId =
   | 'not-found'
 
 export type AppRoute =
-  | { area: 'public'; page: PublicPage; slug?: string }
+  | { area: 'heist' }
   | { area: 'login' }
-  | { area: 'client'; page: ClientPageId; caseId?: string; documentId?: string; questId?: string }
   | { area: 'admin'; page: AdminPageId; participant?: string; caseId?: string; documentId?: string; questId?: string; taskId?: string }
-
-const clientPages: Record<string, ClientPageId> = {
-  '/client': 'dashboard',
-  '/client/accounts': 'accounts',
-  '/client/cases': 'cases',
-  '/client/tasks': 'tasks',
-  '/client/documents': 'documents',
-  '/client/correspondence': 'correspondence',
-  '/client/archive': 'archive',
-  '/client/profile': 'profile',
-}
 
 const adminPages: Record<string, AdminPageId> = {
   '/admin': 'overview',
@@ -70,17 +46,10 @@ const adminPages: Record<string, AdminPageId> = {
   '/admin/settings': 'settings',
 }
 
+export const heistEntryPath = '/heist'
+
 export function matchRoute(path: string): AppRoute {
-  if (path === '/login' || path === '/client-access') return { area: 'login' }
-  if (path === '/client' || path.startsWith('/client/')) {
-    const clientQuest = /^\/client\/tasks\/([0-9a-f-]{36})$/i.exec(path)
-    if (clientQuest) return { area: 'client', page: 'quest', questId: clientQuest[1] }
-    const clientCase = /^\/client\/cases\/([0-9a-f-]{36})$/i.exec(path)
-    if (clientCase) return { area: 'client', page: 'case', caseId: clientCase[1] }
-    const clientDocument = /^\/client\/documents\/([0-9a-f-]{36})$/i.exec(path)
-    if (clientDocument) return { area: 'client', page: 'document', documentId: clientDocument[1] }
-    return { area: 'client', page: clientPages[path] ?? 'not-found' }
-  }
+  if (path === '/login') return { area: 'login' }
   if (path === '/admin' || path.startsWith('/admin/')) {
     if (path.startsWith('/admin/participants/')) {
       const participant = path.slice('/admin/participants/'.length).toLowerCase()
@@ -105,28 +74,15 @@ export function matchRoute(path: string): AppRoute {
     if (adminCase) return { area: 'admin', page: 'case', caseId: adminCase[1] }
     return { area: 'admin', page: adminPages[path] ?? 'not-found' }
   }
-  if (path === '/') return { area: 'public', page: 'home' }
-  if (path === '/about') return { area: 'public', page: 'about' }
-  if (path === '/services') return { area: 'public', page: 'services' }
-  if (path === '/expertise') return { area: 'public', page: 'expertise' }
-  if (path === '/insights') return { area: 'public', page: 'insights' }
-  if (path === '/contact') return { area: 'public', page: 'contact' }
-  if (path.startsWith('/insights/')) {
-    const slug = path.slice('/insights/'.length)
-    if (articles.some((article) => article.slug === slug)) {
-      return { area: 'public', page: 'article', slug }
-    }
-  }
-  return { area: 'public', page: 'not-found' }
+  return { area: 'heist' }
 }
 
 export function isCurrentPage(path: string, href: string) {
-  if (href === '/admin' || href === '/client') return path === href
+  if (href === '/admin') return path === href
   return path === href || path.startsWith(`${href}/`)
 }
 
 export function homeFor(roles: readonly string[]) {
   if (roles.includes('ADMIN')) return '/admin'
-  if (roles.includes('CLIENT')) return '/client'
   return null
 }

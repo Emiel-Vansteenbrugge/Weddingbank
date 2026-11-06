@@ -42,6 +42,8 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
 
     public DbSet<DocumentReadBaseline> DocumentReadBaselines => Set<DocumentReadBaseline>();
 
+    public DbSet<HeistRoom> HeistRooms => Set<HeistRoom>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Role>(entity =>
@@ -326,6 +328,18 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
         {
             entity.ToTable("DocumentReadBaselines");
             entity.Property(baseline => baseline.Id).ValueGeneratedNever();
+        });
+
+        modelBuilder.Entity<HeistRoom>(entity =>
+        {
+            entity.ToTable("HeistRooms", table =>
+            {
+                table.HasCheckConstraint("CK_HeistRooms_Status", "\"Status\" IN ('CLOSED', 'OPEN')");
+                table.HasCheckConstraint("CK_HeistRooms_Stage", "\"Stage\" = 'entrance'");
+            });
+            entity.Property(room => room.Id).ValueGeneratedNever();
+            entity.Property(room => room.Status).HasMaxLength(16).IsRequired();
+            entity.Property(room => room.Stage).HasMaxLength(32).IsRequired();
         });
     }
 

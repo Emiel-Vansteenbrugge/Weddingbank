@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { fetchHeist, setHeistOpen, type HeistRecord } from './heist-api.ts'
+import { fetchHeist, resetHeist, setHeistOpen, type HeistRecord } from './heist-api.ts'
 
 type DeskState =
   | { status: 'loading' }
@@ -29,6 +29,20 @@ export function HeistDesk() {
       active = false
     }
   }, [])
+
+  async function reset() {
+    if (pending) return
+    setPending(true)
+    setError(null)
+    try {
+      const record = await resetHeist()
+      setState({ status: 'ready', record })
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'The room could not be reset.')
+    } finally {
+      setPending(false)
+    }
+  }
 
   async function change(open: boolean) {
     if (pending) return
@@ -68,7 +82,7 @@ export function HeistDesk() {
       <div className="empty-list">
         <section>
           <h2>Shared progress</h2>
-          <p>{record.stage === 'entrance' ? 'Entrance' : record.stage}</p>
+          <p>{record.stage === 'inside' ? 'Inside the bank' : 'Entrance'}</p>
         </section>
         <section>
           <h2>Physical safe</h2>
@@ -81,6 +95,9 @@ export function HeistDesk() {
         </button>
         <button className="quiet-button" type="button" onClick={() => void change(false)} disabled={pending || !open}>
           Close the room
+        </button>
+        <button className="quiet-button" type="button" onClick={() => void reset()} disabled={pending || record.stage !== 'inside'}>
+          Reset to the entrance
         </button>
       </div>
     </>

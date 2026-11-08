@@ -307,7 +307,7 @@ namespace WeddingBank.Infrastructure.Persistence.Migrations
 
                     b.ToTable("HeistRooms", null, t =>
                         {
-                            t.HasCheckConstraint("CK_HeistRooms_Stage", "\"Stage\" = 'entrance'");
+                            t.HasCheckConstraint("CK_HeistRooms_Stage", "\"Stage\" IN ('entrance', 'inside')");
 
                             t.HasCheckConstraint("CK_HeistRooms_Status", "\"Status\" IN ('CLOSED', 'OPEN')");
                         });

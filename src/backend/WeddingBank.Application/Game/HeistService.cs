@@ -39,6 +39,16 @@ public sealed class HeistService(IHeistStore store, TimeProvider clock)
         return ChangeAsync(room => room.Close(clock.GetUtcNow()), cancellationToken);
     }
 
+    public Task<HeistView> EnterAsync(CancellationToken cancellationToken)
+    {
+        return ChangeAsync(room => room.Enter(clock.GetUtcNow()), cancellationToken);
+    }
+
+    public Task<HeistView> ResetAsync(CancellationToken cancellationToken)
+    {
+        return ChangeAsync(room => room.ResetToEntrance(clock.GetUtcNow()), cancellationToken);
+    }
+
     private async Task<HeistView> ChangeAsync(Action<HeistRoom> change, CancellationToken cancellationToken)
     {
         var room = await store.GetOrBeginAsync(clock.GetUtcNow(), cancellationToken);

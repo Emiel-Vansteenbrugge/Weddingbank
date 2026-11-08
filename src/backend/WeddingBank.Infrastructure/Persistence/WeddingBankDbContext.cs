@@ -335,7 +335,7 @@ public sealed class WeddingBankDbContext(DbContextOptions<WeddingBankDbContext> 
             entity.ToTable("HeistRooms", table =>
             {
                 table.HasCheckConstraint("CK_HeistRooms_Status", "\"Status\" IN ('CLOSED', 'OPEN')");
-                table.HasCheckConstraint("CK_HeistRooms_Stage", "\"Stage\" = 'entrance'");
+                table.HasCheckConstraint("CK_HeistRooms_Stage", "\"Stage\" IN ('entrance', 'inside')");
             });
             entity.Property(room => room.Id).ValueGeneratedNever();
             entity.Property(room => room.Status).HasMaxLength(16).IsRequired();

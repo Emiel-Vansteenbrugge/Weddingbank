@@ -8,10 +8,12 @@ internal static class HeistEndpoints
     public static void MapHeistEndpoints(this WebApplication app)
     {
         app.MapGet("/api/heist", ReadAsync).AllowAnonymous();
+        app.MapPost("/api/heist/enter", EnterAsync).AllowAnonymous();
 
         var admin = app.MapGroup("/api/admin/heist").RequireAuthorization("Admin");
         admin.MapPost("/open", OpenAsync).AddEndpointFilter(HouseRequestGuard.Invoke);
         admin.MapPost("/close", CloseAsync).AddEndpointFilter(HouseRequestGuard.Invoke);
+        admin.MapPost("/reset", ResetAsync).AddEndpointFilter(HouseRequestGuard.Invoke);
     }
 
     private static async Task<IResult> ReadAsync(HeistService heist, CancellationToken cancellationToken)
@@ -27,5 +29,15 @@ internal static class HeistEndpoints
     private static async Task<IResult> CloseAsync(HeistService heist, CancellationToken cancellationToken)
     {
         return Results.Ok(await heist.CloseAsync(cancellationToken));
+    }
+
+    private static async Task<IResult> EnterAsync(HeistService heist, CancellationToken cancellationToken)
+    {
+        return Results.Ok(await heist.EnterAsync(cancellationToken));
+    }
+
+    private static async Task<IResult> ResetAsync(HeistService heist, CancellationToken cancellationToken)
+    {
+        return Results.Ok(await heist.ResetAsync(cancellationToken));
     }
 }

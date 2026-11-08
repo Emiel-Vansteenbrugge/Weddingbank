@@ -20,5 +20,39 @@ services:
       retries: 12
       start_period: 10s
 
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/docker/api.Dockerfile
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      TestAccounts__Enabled: "true"
+      POSTGRES_HOST: postgres
+      POSTGRES_USER: ${POSTGRES_USER:-weddingbank}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-weddingbank_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-weddingbank}
+
+  web:
+    build:
+      context: ../..
+      dockerfile: infra/docker/web.Dockerfile
+    restart: unless-stopped
+
+  # The built site requests /api on the same origin. This proxy is that origin.
+  proxy:
+    build:
+      context: ../..
+      dockerfile: infra/docker/proxy.Dockerfile
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      - api
+      - web
+
 volumes:
   weddingbank_dev_pgdata:

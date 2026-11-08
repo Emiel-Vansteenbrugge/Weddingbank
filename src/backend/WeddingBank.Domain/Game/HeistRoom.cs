@@ -25,6 +25,8 @@ public sealed class HeistRoom
 
     public const string Entrance = "entrance";
 
+    public const string Inside = "inside";
+
     private HeistRoom()
     {
     }
@@ -51,13 +53,28 @@ public sealed class HeistRoom
     public void Open(DateTimeOffset now)
     {
         Status = HeistStatuses.Open;
-        Stage = Entrance;
         UpdatedAt = now;
     }
 
     public void Close(DateTimeOffset now)
     {
         Status = HeistStatuses.Closed;
+        UpdatedAt = now;
+    }
+
+    public void Enter(DateTimeOffset now)
+    {
+        if (Stage == Inside)
+        {
+            return;
+        }
+
+        Stage = Inside;
+        UpdatedAt = now;
+    }
+
+    public void ResetToEntrance(DateTimeOffset now)
+    {
         Stage = Entrance;
         UpdatedAt = now;
     }
